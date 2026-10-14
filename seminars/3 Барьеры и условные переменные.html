@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Интерактивный учебник по семинару 3: барьеры, busy-wait, семафоры и условные переменные в POSIX Threads.">
+<title>Семинар 3 — Барьеры и условные переменные | Интерактивный учебник</title>
+<style>
+:root{--bg:#f4f7fb;--panel:#fff;--text:#192337;--muted:#58677e;--line:#dbe3ef;--blue:#2359d6;--blue2:#eaf0ff;--teal:#087e8b;--tealbg:#e5f7f7;--orange:#a95a08;--orangebg:#fff3df;--red:#b42338;--redbg:#fff0f1;--green:#13734c;--greenbg:#e8f8ef;--code:#111827;--shadow:0 12px 30px rgba(28,45,80,.08);--radius:18px}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:84px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.68 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}a{color:var(--blue);text-decoration-thickness:1px;text-underline-offset:3px}a:hover{color:#153c9b}button,input,select{font:inherit}button{cursor:pointer}code,pre,.code{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}code{font-size:.94em;background:#eef2f8;padding:.12em .35em;border-radius:5px}.shell{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:100vh}.side{position:sticky;top:0;height:100vh;overflow:auto;background:#101a2b;color:#e9efff;padding:24px 16px}.brand{font-weight:800;letter-spacing:.01em;font-size:17px;line-height:1.3;margin:4px 10px 9px}.brand small{display:block;color:#aab8d2;font-size:12px;font-weight:500;margin-top:7px}.progress-wrap{margin:20px 10px;padding:13px;border:1px solid #2b3b57;border-radius:13px;color:#aab8d2;font-size:12px}.progress-track{height:6px;border-radius:9px;background:#2c3950;margin-top:9px;overflow:hidden}.progress-fill{height:100%;width:0;background:#75d8c9;transition:width .25s}.nav-title{color:#7e90ae;font-size:10px;text-transform:uppercase;letter-spacing:.12em;margin:22px 10px 8px}.side nav a{display:block;padding:8px 10px;margin:2px 0;border-radius:9px;color:#cfdaef;text-decoration:none;font-size:13px;line-height:1.35}.side nav a:hover,.side nav a.active{background:#243652;color:#fff}.side nav a.active{box-shadow:inset 3px 0 #75d8c9}.side-foot{color:#8fa0bd;font-size:11px;padding:20px 10px}.main{min-width:0}.topbar{height:62px;padding:0 clamp(18px,4vw,54px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:rgba(244,247,251,.92);backdrop-filter:blur(12px);position:sticky;top:0;z-index:5}.topbar span{font-size:12px;color:var(--muted)}.top-actions{display:flex;gap:8px}.mini-btn,.btn{border:1px solid var(--line);background:white;color:var(--text);border-radius:10px;padding:8px 12px;font-weight:650;font-size:13px}.btn.primary{background:var(--blue);border-color:var(--blue);color:white}.btn:hover,.mini-btn:hover{transform:translateY(-1px);box-shadow:0 5px 12px #152c5015}.content{max-width:1120px;margin:0 auto;padding:30px clamp(16px,4vw,54px) 80px}.hero{background:linear-gradient(130deg,#13213a,#1f4aa8 72%,#0c8291);color:white;border-radius:26px;padding:clamp(24px,5vw,54px);position:relative;overflow:hidden;box-shadow:var(--shadow)}.hero:after{content:"";position:absolute;width:280px;height:280px;border:1px solid #ffffff25;border-radius:50%;right:-50px;top:-80px;box-shadow:0 0 0 30px #ffffff0b,0 0 0 70px #ffffff08}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.15em;font-weight:800;color:#bce9ee}.hero h1{font-size:clamp(30px,4.3vw,49px);line-height:1.08;max-width:780px;margin:15px 0 18px;position:relative;z-index:1}.hero p{color:#e0eaff;max-width:750px;margin:0;position:relative;z-index:1}.hero-stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px;position:relative;z-index:1}.pill{padding:7px 11px;border:1px solid #ffffff35;border-radius:999px;background:#ffffff11;font-size:12px}.hero-art{margin-top:28px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;position:relative;z-index:1}.hero-art .node{border:1px solid #ffffff50;background:#ffffff14;border-radius:12px;padding:10px 13px;font-weight:700;font-size:13px}.hero-art .arrow{color:#a9f1df;font-weight:900}.section{margin-top:30px;scroll-margin-top:84px}.section-head{display:flex;gap:15px;align-items:flex-start;margin:40px 0 18px}.num{flex:none;width:37px;height:37px;display:grid;place-items:center;border-radius:12px;background:var(--blue2);color:var(--blue);font-weight:850}.section h2{font-size:clamp(24px,3vw,32px);letter-spacing:-.025em;line-height:1.2;margin:2px 0 8px}.section-head p{margin:0;color:var(--muted);max-width:790px}.subhead{font-size:20px;margin:26px 0 8px;line-height:1.3}.muted{color:var(--muted)}.grid{display:grid;gap:15px}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:21px;box-shadow:0 2px 6px #172b4b05;min-width:0}.card h3{font-size:17px;line-height:1.35;margin:0 0 9px}.card p:last-child{margin-bottom:0}.card p{margin:8px 0}.callout{border-left:4px solid var(--blue);background:var(--blue2);padding:15px 17px;border-radius:0 13px 13px 0;margin:16px 0}.callout.good{border-color:var(--green);background:var(--greenbg)}.callout.warn{border-color:var(--orange);background:var(--orangebg)}.callout.danger{border-color:var(--red);background:var(--redbg)}.callout strong{display:block;margin-bottom:4px}.small{font-size:13px}.tiny{font-size:11px}.codebox{background:var(--code);color:#e5e7eb;border-radius:15px;overflow:hidden;margin:14px 0;box-shadow:var(--shadow)}.codebar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 13px;border-bottom:1px solid #ffffff1b;color:#9ca3af;font-size:11px}.codebar button{background:#283347;color:#e5e7eb;border:1px solid #48556b;border-radius:7px;padding:4px 8px;font-size:11px}.codebox pre{padding:17px;margin:0;overflow:auto;line-height:1.55;font-size:12.5px;tab-size:4}.codebox pre code{background:none;padding:0;border-radius:0;color:inherit;font-size:inherit}.kw{color:#c4b5fd}.fn{color:#93c5fd}.cm{color:#94a3b8}.str{color:#86efac}.numlit{color:#fca5a5}.tag{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:11px;font-weight:750;color:var(--muted)}.tag.blue{border-color:#c6d4ff;background:#eff3ff;color:#244db3}.tag.green{border-color:#b8e6cb;background:#edfbf2;color:#13734c}.tag.orange{border-color:#f4d6ae;background:#fff5e7;color:#93500a}.diagram{border:1px solid var(--line);border-radius:17px;background:#fff;padding:18px;margin:15px 0}.diagram-title{font-size:12px;text-transform:uppercase;letter-spacing:.1em;font-weight:800;color:var(--muted);margin-bottom:13px}.thread-row{display:grid;grid-template-columns:85px minmax(0,1fr);align-items:center;gap:9px;margin:10px 0}.thread-label{font-weight:750;font-size:12px;color:#394760}.track{height:38px;border-radius:9px;background:#f1f4f9;position:relative;border:1px solid #e0e6ef;overflow:hidden;display:flex;align-items:center;padding:4px}.step-block{font-size:11px;border-radius:6px;padding:4px 8px;white-space:nowrap;font-weight:700}.step-work{background:#dce8ff;color:#244db3}.step-wait{background:#fff0d7;color:#8d4b08}.step-ready{background:#d6f4e2;color:#146841}.track-note{font-size:10px;color:#6b7890;margin:0 0 0 94px}.sim-controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:15px}.sim-result{min-height:47px;padding:12px 14px;background:#f6f8fc;border:1px dashed #c7d2e3;border-radius:11px;margin-top:12px;font-size:13px}.range-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.range-row input{accent-color:var(--blue)}.range-value{font-weight:800;color:var(--blue);min-width:25px}.thread-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}.thread-card{border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;background:#f8faff}.thread-card .circle{width:31px;height:31px;display:grid;place-items:center;margin:0 auto 7px;border-radius:50%;background:#e1eafe;color:#244db3;font-weight:800}.thread-card.waiting{background:var(--orangebg);border-color:#f1d5ae}.thread-card.passed{background:var(--greenbg);border-color:#b6e4c8}.thread-card small{display:block;font-size:11px;line-height:1.35;color:var(--muted)}.quiz{background:#fff;border:1px solid var(--line);border-radius:17px;padding:20px;margin:14px 0}.quiz-q{font-weight:800;margin-bottom:12px}.option{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border:1px solid var(--line);border-radius:9px;margin:7px 0;cursor:pointer;font-size:14px}.option:hover{background:#f5f8ff}.option input{margin-top:5px;accent-color:var(--blue)}.feedback{display:none;padding:10px 12px;border-radius:9px;margin-top:10px;font-size:13px}.feedback.show{display:block}.feedback.ok{background:var(--greenbg);color:var(--green)}.feedback.bad{background:var(--redbg);color:var(--red)}.quiz-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.score{font-weight:800;color:var(--blue)}.checklist{list-style:none;padding:0;margin:0}.checklist li{padding:7px 0;border-bottom:1px solid #edf0f5}.checklist li:last-child{border-bottom:0}.checklist input{accent-color:var(--green);margin-right:9px}.exercise{border:1px solid var(--line);border-radius:16px;background:white;margin:13px 0;overflow:hidden}.exercise summary{cursor:pointer;padding:17px 19px;font-weight:800;list-style:none;display:flex;align-items:center;gap:10px}.exercise summary::-webkit-details-marker{display:none}.exercise summary:after{content:"+";margin-left:auto;color:var(--blue);font-size:22px}.exercise[open] summary:after{content:"−"}.exercise-body{padding:0 19px 18px}.exercise-meta{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}.task-box{background:#f7f9fc;border:1px solid var(--line);border-radius:12px;padding:13px;margin:10px 0}.inline-input{width:100%;min-height:105px;border:1px solid #ccd7e7;border-radius:10px;padding:12px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.5;resize:vertical}.reveal{display:none}.reveal.show{display:block}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px;background:#fff}table{border-collapse:collapse;width:100%;min-width:650px;font-size:13px}th,td{text-align:left;vertical-align:top;padding:12px;border-bottom:1px solid var(--line)}th{background:#eef3fb;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#3b4b65}tr:last-child td{border-bottom:0}.badge{display:inline-block;border-radius:6px;background:#edf2fb;padding:2px 6px;font-size:11px;font-weight:750}.foot{border-top:1px solid var(--line);padding:25px 0 0;margin-top:55px;color:var(--muted);font-size:12px}.backtop{position:fixed;bottom:20px;right:20px;background:var(--blue);color:white;border:0;border-radius:50%;width:44px;height:44px;box-shadow:var(--shadow);font-size:20px;z-index:6}.hidden{display:none!important}.toc-mobile{display:none}
+@media(max-width:900px){.shell{grid-template-columns:1fr}.side{position:relative;height:auto;max-height:none;padding:14px 16px}.side nav{display:flex;gap:5px;overflow:auto;padding-bottom:7px}.side nav a{white-space:nowrap;flex:none}.nav-title,.side-foot,.progress-wrap{display:none}.brand{margin:0 0 10px}.content{padding-top:18px}.topbar{position:static}.grid.three{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.grid.two,.grid.three{grid-template-columns:1fr}.thread-row{grid-template-columns:67px 1fr}.track-note{margin-left:76px}.thread-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{border-radius:19px}.hero-art{gap:5px}.hero-art .node{font-size:11px;padding:8px}.content{padding-left:13px;padding-right:13px}.card{padding:17px}.section-head{gap:10px}.section-head p{font-size:14px}.topbar span{display:none}}
+@media print{.side,.topbar,.backtop,.sim-controls button,.codebar button,.quiz-actions button{display:none!important}.shell{display:block}.content{max-width:none;padding:0}.hero{background:#ddd;color:#111;box-shadow:none}.hero p,.eyebrow{color:#222}.card,.diagram,.quiz,.exercise{break-inside:avoid;box-shadow:none}.reveal{display:block!important}body{background:white}.section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="side">
+  <div class="brand">PTHREADS / СЕМИНАР 03<small>Барьеры и условные переменные</small></div>
+  <div class="progress-wrap">Прогресс изучения <strong id="progressLabel" style="float:right;color:#fff">0%</strong><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div></div>
+  <div class="nav-title">Маршрут обучения</div>
+  <nav id="navigation">
+    <a href="#start">Обзор</a><a href="#barrier">Что такое барьер</a><a href="#spin">1. Холостой цикл</a><a href="#semaphore">2. Семафоры</a><a href="#cond">3. Условные переменные</a><a href="#condbarrier">Барьер на condvar</a><a href="#ring">Передача по кругу</a><a href="#compare">Сравнение подходов</a><a href="#quiz">Проверка знаний</a><a href="#practice">Практикум на C</a><a href="#refs">Документация</a>
+  </nav>
+  <div class="side-foot">Учебник основан на seminar_3 (1).pdf. В исправлениях отдельно помечено, где исходный листинг требует осторожности.</div>
+</aside>
+<main class="main">
+<header class="topbar"><span>Интерактивный курс · C / POSIX Threads</span><div class="top-actions"><button class="mini-btn" id="resetProgress">Сбросить прогресс</button><button class="mini-btn" onclick="window.print()">Печать / PDF</button></div></header>
+<div class="content">
+<section class="hero" id="start">
+  <div class="eyebrow">От интуиции к корректному коду</div>
+  <h1>Барьеры и условные переменные в pthreads</h1>
+  <p>Научимся синхронизировать потоки так, чтобы никто не начинал следующий этап раньше остальных. Разберём три подхода из конспекта, их слабые места, корректный многоразовый барьер и передачу сообщений по кругу.</p>
+  <div class="hero-stats"><span class="pill">9 страниц конспекта</span><span class="pill">3 способа барьера</span><span class="pill">6 задач на C</span><span class="pill">Симуляции и квиз</span></div>
+  <div class="hero-art"><span class="node">Поток 0</span><span class="arrow">→</span><span class="node">Поток 1</span><span class="arrow">→</span><span class="node">Поток 2</span><span class="arrow">→</span><span class="node">Все дошли?</span><span class="arrow">→</span><span class="node">Продолжить вместе</span></div>
+</section>
+
+<section class="section" id="barrier">
+ <div class="section-head"><div class="num">01</div><div><h2>Что такое барьер</h2><p>Ключевое определение с первой страницы конспекта.</p></div></div>
+ <div class="callout"><strong>Определение</strong>Барьер — фрагмент кода, из которого ни один поток не выйдет, пока в него не зашёл последний участвующий поток.</div>
+ <p>Представьте команду из четырёх потоков, каждый из которых обрабатывает свою часть данных. Все выполняют этап A, но этап B можно начинать только тогда, когда <em>каждый</em> закончил A. Барьер — точка коллективного ожидания: быстрые потоки ждут медленный.</p>
+ <div class="diagram">
+  <div class="diagram-title">Схема барьера: потоки прибывают в разное время</div>
+  <div class="thread-row"><div class="thread-label">Поток 0</div><div class="track"><span class="step-block step-work">Этап A</span><span class="step-block step-wait">ожидает</span><span class="step-block step-ready">Этап B</span></div></div>
+  <div class="thread-row"><div class="thread-label">Поток 1</div><div class="track"><span class="step-block step-work">Этап A</span><span class="step-block step-wait">ожидает</span><span class="step-block step-ready">Этап B</span></div></div>
+  <div class="thread-row"><div class="thread-label">Поток 2</div><div class="track"><span class="step-block step-work">Этап A</span><span class="step-block step-ready">дошёл последним → отпускает барьер</span></div></div>
+  <div class="thread-row"><div class="thread-label">Поток 3</div><div class="track"><span class="step-block step-work">Этап A</span><span class="step-block step-wait">ожидает</span><span class="step-block step-ready">Этап B</span></div></div>
+ </div>
+ <div class="grid two">
+  <div class="card"><h3>Барьер не то же самое, что мьютекс</h3><p>Мьютекс защищает критическую секцию так, чтобы владеть ею мог один поток. Барьер синхронизирует группу: всем нужно достичь определённой точки.</p></div>
+  <div class="card"><h3>Барьер не обязательно передаёт данные</h3><p>Его задача — согласовать момент продолжения. Для безопасного доступа к общим данным всё равно нужны корректные правила синхронизации и видимости памяти.</p></div>
+ </div>
+ <h3 class="subhead">Интерактивная модель: кто уже прибыл?</h3>
+ <div class="card">
+  <p class="muted small">Нажми «Привести следующий поток». Пока не прибудут все 4 потока, никто не перейдёт на следующий этап.</p>
+  <div id="barrierThreads" class="thread-cards"></div>
+  <div class="sim-controls"><button class="btn primary" id="arriveBtn">Привести следующий поток</button><button class="btn" id="barrierReset">Начать заново</button><span class="tag blue" id="barrierState">0 из 4</span></div>
+  <div class="sim-result" id="barrierMsg" aria-live="polite">Все потоки выполняют работу. Начни отмечать прибывшие потоки.</div>
+ </div>
+ <div class="callout good"><strong>Проверка понимания</strong>Если три потока из четырёх уже пришли, но четвёртый всё ещё вычисляет, три первых не должны пройти барьер. Иначе этап B может увидеть незавершённые результаты этапа A.</div>
+</section>
+
+<section class="section" id="spin">
+ <div class="section-head"><div class="num">02</div><div><h2>Подход 1. Холостой цикл (busy waiting)</h2><p>Самый простой вариант из листинга 1, но не лучший для настоящей программы.</p></div></div>
+ <p>В конспекте используются четыре потока и десять тысяч барьеров: <code>NTHREADS = 4</code>, <code>NBARRIERS = 10000</code>. Каждый поток под мьютексом увеличивает <code>counter[j]</code>, затем крутится в цикле, пока счётчик не станет равен числу потоков.</p>
+ <div class="codebox"><div class="codebar"><span>Идея листинга 1 · сокращённый фрагмент</span><button data-copy="spin-code">Копировать код</button></div><pre><code id="spin-code">for (int j = 0; j &lt; NBARRIERS; ++j) {
+    pthread_mutex_lock(&amp;mutex);
+    counter[j]++;
+    pthread_mutex_unlock(&amp;mutex);
+
+    /* Холостое ожидание */
+    while (counter[j] != NTHREADS) {
+        /* пусто: поток постоянно проверяет условие */
+    }
+}</code></pre></div>
+ <h3 class="subhead">Что делает каждая строка</h3>
+ <div class="grid two">
+  <div class="card"><h3>1. Учёт прибывших</h3><p><code>lock → counter[j]++ → unlock</code> не даёт двум потокам одновременно потерять инкремент общего счётчика. Без мьютекса операции «прочитать, прибавить, записать» могли бы конфликтовать.</p></div>
+  <div class="card"><h3>2. Активное ожидание</h3><p>Цикл непрерывно читает значение счётчика. Он не переводит поток в состояние ожидания через ОС, а продолжает занимать процессорное время, пока условие ложно.</p></div>
+ </div>
+ <div class="callout danger"><strong>Серьёзная проблема исходного фрагмента</strong>Чтение <code>counter[j]</code> в цикле происходит без мьютекса, одновременно с записями других потоков. Для обычного C <code>int</code> это гонка данных (data race) и неопределённое поведение. При <code>-O2</code> компилятор может вынести чтение из цикла, и поток будет ждать бесконечно. Одной лишь вставки <code>volatile</code> для корректной межпоточной синхронизации недостаточно.</div>
+ <h3 class="subhead">Три недостатка, которые подчёркивает конспект</h3>
+ <div class="grid three">
+  <div class="card"><span class="tag orange">Производительность</span><h3>Потоки заняты ожиданием</h3><p>Если запущенных потоков больше, чем доступных процессорных ядер, ожидающие потоки вытесняют полезную работу и ухудшают производительность.</p></div>
+  <div class="card"><span class="tag orange">Оптимизация</span><h3>Оптимизатор не видит протокол</h3><p>Компилятор может оптимизировать цикл, поскольку обычное чтение общей переменной не говорит ему, что другой поток её меняет. В корректном C это прежде всего data race.</p></div>
+  <div class="card"><span class="tag orange">Много барьеров</span><h3>Счётчик одноразовый</h3><p>Счётчик для данного этапа не обнуляется согласованно после прохода всеми потоками. В конспекте поэтому заводится массив <code>counter[NBARRIERS]</code>, по одному счётчику на барьер.</p></div>
+ </div>
+ <p class="small muted">Измерение в листинге 1 сделано через макрос <code>GET_TIME</code> из подключаемого <code>timer.h</code>: фиксируется начало, создаются 4 потока, главный поток вызывает <code>pthread_join</code> для каждого и печатает общее время. При <code>NBARRIERS = 10000</code> измеряется прохождение серии барьеров, а не время одного барьера. Определение <code>timer.h</code> в конспекте не приведено.</p>
+ <details class="exercise"><summary>Проверка: почему нельзя просто добавить <code>volatile</code>?</summary><div class="exercise-body"><p><strong>Ответ:</strong> <code>volatile</code> ограничивает некоторые оптимизации обращений к объекту, но не делает инкремент атомарным и не устанавливает полноценную синхронизацию между потоками. Используй mutex, атомики C11 с правильной моделью памяти или библиотечный примитив ожидания.</p></div></details>
+</section>
+
+<section class="section" id="semaphore">
+ <div class="section-head"><div class="num">03</div><div><h2>Подход 2. Семафоры</h2><p>Ожидание без постоянного опроса счётчика.</p></div></div>
+ <p>В листинге 2 используется <code>sem_t</code>. У семафора есть целочисленное значение, не уходящее ниже нуля. <code>sem_wait</code> уменьшает положительное значение на 1; если оно равно 0, поток блокируется. <code>sem_post</code> добавляет 1 и может разблокировать ожидающий поток.</p>
+ <div class="grid two">
+  <div class="card"><h3><code>sem_count</code> — защита счётчика</h3><p>Инициализируется значением 1. Это семафор, похожий по применению на бинарный мьютекс: он не даёт двум потокам одновременно менять <code>counter</code>.</p></div>
+  <div class="card"><h3><code>sem_barrier[j]</code> — ворота данного этапа</h3><p>Каждый барьерный семафор стартует с 0. Не последние потоки ждут на нём, а последний прибывший публикует столько разрешений, сколько нужно ожидающим потокам.</p></div>
+ </div>
+ <h3 class="subhead">Интерактивный счётчик семафора</h3>
+ <div class="card">
+  <div class="range-row"><label for="semStart">Начальное значение:</label><input id="semStart" type="range" min="0" max="5" value="0"><span class="range-value" id="semValue">0</span></div>
+  <div class="sim-controls"><button class="btn primary" id="semWaitBtn">sem_wait()</button><button class="btn" id="semPostBtn">sem_post()</button><button class="btn" id="semResetBtn">Сбросить</button><span class="tag" id="semBlocked">Ожидающих: 0</span></div>
+  <div id="semExplanation" class="sim-result">Значение 0: вызов sem_wait() заблокирует поток, пока не появится разрешение.</div>
+ </div>
+ <h3 class="subhead">Алгоритм из конспекта, шаг за шагом</h3>
+ <ol>
+  <li>Поток вызывает <code>sem_wait(&amp;sem_count)</code>, чтобы войти в защищённую область.</li>
+  <li>Если до него пришли уже <code>NTHREADS - 1</code> потоков, текущий — последний: он обнуляет <code>counter</code>, отпускает <code>sem_count</code> и выполняет <code>NTHREADS - 1</code> вызовов <code>sem_post(&amp;sem_barrier[j])</code>.</li>
+  <li>Иначе поток увеличивает <code>counter</code>, отпускает <code>sem_count</code> и блокируется на <code>sem_barrier[j]</code>.</li>
+  <li>Когда последний поток публикует разрешения, ожидающие потоки могут продолжить выполнение этапа.</li>
+ </ol>
+ <div class="codebox"><div class="codebar"><span>Логика барьера на семафорах из листинга 2</span><button data-copy="sem-code">Копировать код</button></div><pre><code id="sem-code">sem_wait(&amp;sem_count);
+if (counter == NTHREADS - 1) {
+    counter = 0;
+    sem_post(&amp;sem_count);
+    for (int i = 0; i &lt; NTHREADS - 1; ++i)
+        sem_post(&amp;sem_barrier[j]);
+} else {
+    counter++;
+    sem_post(&amp;sem_count);
+    sem_wait(&amp;sem_barrier[j]);
+}</code></pre></div>
+ <div class="callout warn"><strong>Нюанс к объяснению в PDF</strong>Конспект утверждает, что семафор барьера может остаться ненулевым, если разбуженные потоки временно не запланированы ОС, и поэтому его нельзя переиспользовать. В стандартной семантике семафора разрешения <code>sem_post</code> сохраняются: позднее вызванный <code>sem_wait</code> потребит сохранённое разрешение. В показанном коде к тому же выделяется отдельный <code>sem_barrier[j]</code> для каждого j-го барьера — он не переиспользуется между раундами. Практический вывод остаётся важным: при проектировании многоразового барьера нельзя позволять разрешениям одной фазы ошибочно выпускать потоки через другую фазу; нужно чётко разделять поколения.</div>
+ <p class="small muted">В листинге создаётся массив семафоров размером <code>NBARRIERS</code>, каждый инициализируется <code>sem_init(&amp;sem_barrier[i], 0, 0)</code>; <code>shared = 0</code> означает разделение между потоками одного процесса. <code>sem_count</code> начинается с 1. После <code>pthread_join</code> семафоры очищаются через <code>sem_destroy</code>. В этом листинге также объявлен и инициализирован <code>pthread_mutex_t mutex</code>, но для защиты счётчика фактически используется <code>sem_count</code>; объявленный мьютекс алгоритму не нужен. Время серии из 10000 барьеров измеряется тем же <code>GET_TIME</code>.</p>
+</section>
+
+<section class="section" id="cond">
+ <div class="section-head"><div class="num">04</div><div><h2>Подход 3. Условные переменные</h2><p><code>pthread_cond_t</code> сообщает потокам, что состояние, которого они ждут, могло измениться.</p></div></div>
+ <p>Условная переменная применяется <strong>вместе с мьютексом</strong>. Сама по себе она не хранит «истинность условия» и не заменяет переменную-предикат. Состояние задаётся отдельными данными — например, количеством прибывших потоков или флагом готовности.</p>
+ <div class="grid two">
+  <div class="card"><h3>Инициализация и уничтожение</h3><p><code>pthread_cond_init(&amp;cond, NULL)</code> создаёт условную переменную с атрибутами по умолчанию.</p><p><code>pthread_cond_destroy(&amp;cond)</code> освобождает её ресурсы после того, как никто больше её не использует и не ждёт на ней.</p></div>
+  <div class="card"><h3>Сигнализация</h3><p><code>pthread_cond_signal(&amp;cond)</code> пробуждает один поток из ждущих (какой именно — не гарантируется).</p><p><code>pthread_cond_broadcast(&amp;cond)</code> пробуждает все потоки, которые ждут на этой условной переменной.</p></div>
+ </div>
+ <h3 class="subhead">Шпаргалка API</h3>
+ <div class="codebox"><div class="codebar"><span>Основные прототипы pthread condition variables</span><button data-copy="cond-api">Копировать код</button></div><pre><code id="cond-api">int pthread_cond_init(pthread_cond_t *cond,
+                      const pthread_condattr_t *attr);
+int pthread_cond_destroy(pthread_cond_t *cond);
+int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+int pthread_cond_signal(pthread_cond_t *cond);
+int pthread_cond_broadcast(pthread_cond_t *cond);</code></pre></div>
+ <h3 class="subhead">Самое важное: что делает <code>pthread_cond_wait</code></h3>
+ <div class="diagram">
+  <div class="diagram-title">Три действия одной операции ожидания</div>
+  <div class="grid three">
+   <div class="card" style="background:#eef3ff"><span class="tag blue">Шаг 1</span><h3>Отпускает мьютекс</h3><p class="small">Атомарно относительно ожидания: другой поток может зайти и изменить общее условие.</p></div>
+   <div class="card" style="background:#fff4e4"><span class="tag orange">Шаг 2</span><h3>Ждёт сигнал</h3><p class="small">Ожидающий поток не крутится в пустом цикле и не занимает CPU постоянными проверками.</p></div>
+   <div class="card" style="background:#eaf8ef"><span class="tag green">Шаг 3</span><h3>Захватывает мьютекс снова</h3><p class="small">Функция возвращается только после повторного захвата переданного мьютекса.</p></div>
+  </div>
+ </div>
+ <div class="codebox"><div class="codebar"><span>Концептуальная схема pthread_cond_wait</span><button data-copy="wait-code">Копировать код</button></div><pre><code id="wait-code">pthread_mutex_unlock(&amp;mutex);
+wait_on_signal(&amp;cond);
+pthread_mutex_lock(&amp;mutex);</code></pre></div>
+ <p>Это псевдокод внутреннего поведения из конспекта, а не инструкция вызывать три функции вручную. Пользовательский код вызывает только <code>pthread_cond_wait(&amp;cond, &amp;mutex)</code>; отпускание и повторный захват мьютекса функция организует сама.</p>
+ <div class="callout danger"><strong>Почему ожидание проверяется через <code>while</code>, а не через <code>if</code></strong>Возможен <em>spurious wakeup</em> — поток возвращается из ожидания даже без полезного сигнала для нужного условия. Кроме того, сигнал не гарантирует, что условие всё ещё истинно к моменту, когда поток вновь получит мьютекс. Поэтому поток обязан повторно проверять предикат под мьютексом: <code>while (!condition) pthread_cond_wait(...);</code>.</div>
+ <h3 class="subhead">Корректный шаблон ожидания</h3>
+ <div class="codebox"><div class="codebar"><span>Проверяем состояние под тем же мьютексом</span><button data-copy="predicate-code">Копировать код</button></div><pre><code id="predicate-code">pthread_mutex_lock(&amp;mutex);
+while (!condition) {
+    pthread_cond_wait(&amp;cond, &amp;mutex);
+}
+/* Условие проверено при захваченном mutex */
+use_shared_state();
+pthread_mutex_unlock(&amp;mutex);</code></pre></div>
+ <p>Поток, который меняет условие, тоже должен работать с соответствующим общим состоянием под этим мьютексом. Типовой порядок: заблокировать мьютекс → изменить предикат → вызвать <code>signal</code> или <code>broadcast</code> → разблокировать мьютекс.</p>
+</section>
+
+<section class="section" id="condbarrier">
+ <div class="section-head"><div class="num">05</div><div><h2>Барьер на условной переменной</h2><p>Листинг 3 из конспекта и важные условия его корректности.</p></div></div>
+ <p>Переменные листинга: <code>mutex</code> защищает счётчик <code>counter</code>; <code>cond</code> используется для пробуждения; <code>NTHREADS</code> задаёт число участников. Каждый поток входит в критическую секцию и увеличивает счётчик. Последний сбрасывает его и будит остальных.</p>
+ <div class="codebox"><div class="codebar"><span>Логика из конспекта, с сохранением существенной строки ожидания</span><button data-copy="cond-original">Копировать код</button></div><pre><code id="cond-original">pthread_mutex_lock(&amp;mutex);
+counter++;
+if (counter == NTHREADS) {
+    counter = 0;
+    pthread_cond_broadcast(&amp;cond);
+} else {
+    while (pthread_cond_wait(&amp;cond, &amp;mutex) != 0) ;
+}
+pthread_mutex_unlock(&amp;mutex);</code></pre></div>
+ <div class="callout danger"><strong>Важное замечание к исходному листингу</strong>Цикл <code>while (pthread_cond_wait(...) != 0)</code> повторяет ожидание только при ненулевом коде возврата. Он <em>не проверяет предикат</em> и потому не защищает от spurious wakeup. Более того, просто исправить условие на <code>while (counter &lt; NTHREADS)</code> недостаточно для многоразового барьера: последний поток сбрасывает счётчик в 0, а быстрый поток может начать следующий раунд до того, как все потоки предыдущего раунда окончательно вышли. Нужен номер поколения (generation).</div>
+ <h3 class="subhead">Исправленная версия: многоразовый барьер</h3>
+ <p>Здесь у барьера хранится <code>count</code> — сколько потоков прибыло в текущем раунде, и <code>generation</code> — номер раунда. Каждый поток запоминает поколение при входе и ждёт, пока поколение изменится. Последний поток сбрасывает счётчик, увеличивает номер поколения и делает broadcast.</p>
+ <div class="codebox"><div class="codebar"><span>Компилируемый пример reusable barrier</span><button data-copy="correct-barrier">Копировать код</button></div><pre><code id="correct-barrier">#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define NTHREADS 4
+#define ROUNDS 5
+
+typedef struct {
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    unsigned count;
+    unsigned generation;
+    unsigned parties;
+} barrier_t;
+
+int barrier_init(barrier_t *b, unsigned parties) {
+    if (parties == 0) return -1;
+    b-&gt;count = 0;
+    b-&gt;generation = 0;
+    b-&gt;parties = parties;
+    if (pthread_mutex_init(&amp;b-&gt;mutex, NULL) != 0) return -1;
+    if (pthread_cond_init(&amp;b-&gt;cond, NULL) != 0) {
+        pthread_mutex_destroy(&amp;b-&gt;mutex);
+        return -1;
+    }
+    return 0;
+}
+
+void barrier_wait(barrier_t *b) {
+    pthread_mutex_lock(&amp;b-&gt;mutex);
+    unsigned my_generation = b-&gt;generation;
+    b-&gt;count++;
+
+    if (b-&gt;count == b-&gt;parties) {
+        b-&gt;count = 0;
+        b-&gt;generation++;
+        pthread_cond_broadcast(&amp;b-&gt;cond);
+    } else {
+        while (my_generation == b-&gt;generation) {
+            pthread_cond_wait(&amp;b-&gt;cond, &amp;b-&gt;mutex);
+        }
+    }
+    pthread_mutex_unlock(&amp;b-&gt;mutex);
+}
+
+void barrier_destroy(barrier_t *b) {
+    pthread_cond_destroy(&amp;b-&gt;cond);
+    pthread_mutex_destroy(&amp;b-&gt;mutex);
+}
+
+barrier_t barrier;
+void *worker(void *arg) {
+    long rank = (long)arg;
+    for (int r = 0; r &lt; ROUNDS; ++r) {
+        printf("thread %ld: work in round %d\n", rank, r);
+        barrier_wait(&amp;barrier);
+        printf("thread %ld: passed round %d\n", rank, r);
+    }
+    return NULL;
+}
+
+int main(void) {
+    pthread_t threads[NTHREADS];
+    if (barrier_init(&amp;barrier, NTHREADS) != 0) {
+        fputs("barrier_init failed\n", stderr);
+        return EXIT_FAILURE;
+    }
+    for (long i = 0; i &lt; NTHREADS; ++i)
+        if (pthread_create(&amp;threads[i], NULL, worker, (void *)i) != 0) {
+            perror("pthread_create");
+            return EXIT_FAILURE;
+        }
+    for (int i = 0; i &lt; NTHREADS; ++i)
+        pthread_join(threads[i], NULL);
+    barrier_destroy(&amp;barrier);
+    return 0;
+}</code></pre></div>
+ <div class="callout good"><strong>Почему поколение решает проблему</strong>Поток ждёт не просто «пока счётчик станет нулём или достигнет порога», а пока изменится конкретный раунд, в котором он прибыл. Сигнал прошлого раунда не удовлетворит условие для следующего раунда. Проверка идёт в цикле под мьютексом, поэтому spurious wakeup безопасен.</div>
+ <p class="small muted">Как и в листинках 1–2, исходный листинг 3 замеряет серию из <code>NBARRIERS = 10000</code> синхронизаций и печатает разность <code>end - start</code>; вызовы <code>GET_TIME</code> определены во внешнем для конспекта заголовке <code>timer.h</code>.</p>
+ <p class="small muted">Сборка на Linux/WSL: <code>gcc -std=c11 -Wall -Wextra -O2 barrier.c -o barrier -pthread</code>, затем <code>./barrier</code>. Для краткости обработка ошибок во время создания нескольких потоков в учебном примере не выполняет полный откат уже созданных потоков; в промышленном коде такой cleanup необходимо добавить.</p>
+</section>
+
+<section class="section" id="ring">
+ <div class="section-head"><div class="num">06</div><div><h2>Передача сообщений по кругу</h2><p>Второй пример с условными переменными из конспекта: каждый поток отправляет сообщение следующему.</p></div></div>
+ <p>Для потока с номером <code>my_rank</code> получатель вычисляется формулой <code>dest = (my_rank + 1) % thread_count</code>. Остаток от деления замыкает цепочку: поток с последним номером отправляет сообщение потоку 0. Массив <code>messages[dest]</code> хранит указатель на сообщение для получателя, а <code>cond[dest]</code> — условную переменную, на которой получатель может ждать.</p>
+ <div class="card">
+  <div class="range-row"><label for="ringN">Число потоков:</label><input id="ringN" type="range" min="2" max="8" value="5"><span id="ringNVal" class="range-value">5</span><button id="ringRun" class="btn primary">Запустить раунд</button><button id="ringClear" class="btn">Сбросить</button></div>
+  <div id="ringView" class="thread-cards" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))"></div>
+  <div class="sim-result" id="ringResult">Каждый поток отправит «Hello to DEST from SRC» следующему потоку.</div>
+ </div>
+ <h3 class="subhead">Разбор исходного алгоритма</h3>
+ <ol>
+  <li>Поток вычисляет <code>dest</code> и выделяет буфер сообщения.</li>
+  <li>Формирует текст наподобие <code>Hello to 3 from 2</code> и помещает указатель в <code>messages[dest]</code>.</li>
+  <li>Блокирует общий мьютекс, сигнализирует <code>cond[dest]</code>, а затем проверяет, пришло ли сообщение в собственный слот <code>messages[my_rank]</code>.</li>
+  <li>Если собственного сообщения ещё нет, поток вызывает <code>pthread_cond_wait</code>, затем разблокирует мьютекс и печатает принятое сообщение.</li>
+  <li>Главный поток присоединяет все потоки через <code>pthread_join</code>, после чего освобождает строки, уничтожает условные переменные и мьютекс.</li>
+ </ol>
+ <div class="codebox"><div class="codebar"><span>Существенный фрагмент листинга 4</span><button data-copy="ring-original">Копировать код</button></div><pre><code id="ring-original">long dest = (my_rank + 1) % thread_count;
+char *my_msg = malloc(MSG_MAX * sizeof(char));
+sprintf(my_msg, "Hello to %ld from %ld", dest, my_rank);
+messages[dest] = my_msg;
+
+pthread_mutex_lock(&amp;mutex);
+pthread_cond_signal(&amp;cond[dest]);
+if (messages[my_rank] == NULL)
+    pthread_cond_wait(&amp;cond[my_rank], &amp;mutex);
+pthread_mutex_unlock(&amp;mutex);
+
+printf("Thread %ld &gt; %s\n", my_rank, messages[my_rank]);</code></pre></div>
+ <div class="callout warn"><strong>Что стоит усилить по сравнению с исходным листингом</strong>Условие перед ожиданием нужно проверять циклом <code>while</code>, а чтение и запись слотов <code>messages[]</code> — выполнять под одним мьютексом. В исходном фрагменте запись <code>messages[dest] = my_msg</code> выполняется вне мьютекса, поэтому возможна гонка с чтением слота получателем. Кроме того, строка-предикат должна быть защищена тем же мьютексом, что и переход в ожидание: это закрывает окно между проверкой условия и ожиданием.</div>
+ <h3 class="subhead">Безопаснее организованный шаблон обмена</h3>
+ <div class="codebox"><div class="codebar"><span>Полная компилируемая версия ring.c</span><button data-copy="ring-correct">Копировать код</button></div><pre><code id="ring-correct">#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;errno.h&gt;
+
+#define MAX_THREADS 1024
+#define MSG_MAX 100
+
+int thread_count;
+char **messages;
+pthread_cond_t *cond;
+pthread_mutex_t mutex;
+
+static void *Send_msg(void *arg) {
+    long my_rank = *(long *)arg;
+    long dest = (my_rank + 1) % thread_count;
+    char *my_msg = malloc(MSG_MAX);
+    if (my_msg == NULL) return NULL;
+    snprintf(my_msg, MSG_MAX, "Hello to %ld from %ld", dest, my_rank);
+
+    pthread_mutex_lock(&amp;mutex);
+    messages[dest] = my_msg;
+    pthread_cond_signal(&amp;cond[dest]);
+    while (messages[my_rank] == NULL) {
+        pthread_cond_wait(&amp;cond[my_rank], &amp;mutex);
+    }
+    char *received = messages[my_rank];
+    pthread_mutex_unlock(&amp;mutex);
+
+    printf("Thread %ld &gt; %s\n", my_rank, received);
+    return NULL;
+}
+
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s THREAD_COUNT\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+    char *end = NULL;
+    errno = 0;
+    long n = strtol(argv[1], &amp;end, 10);
+    if (errno != 0 || end == argv[1] || *end != '\0' || n &lt; 2 || n &gt; MAX_THREADS) {
+        fprintf(stderr, "THREAD_COUNT must be in [2, %d]\n", MAX_THREADS);
+        return EXIT_FAILURE;
+    }
+    thread_count = (int)n;
+    pthread_t *threads = calloc((size_t)thread_count, sizeof(*threads));
+    long *ranks = calloc((size_t)thread_count, sizeof(*ranks));
+    messages = calloc((size_t)thread_count, sizeof(*messages));
+    cond = calloc((size_t)thread_count, sizeof(*cond));
+    if (!threads || !ranks || !messages || !cond) {
+        perror("calloc");
+        return EXIT_FAILURE;
+    }
+    if (pthread_mutex_init(&amp;mutex, NULL) != 0) {
+        fprintf(stderr, "pthread_mutex_init failed\n");
+        return EXIT_FAILURE;
+    }
+    for (long i = 0; i &lt; thread_count; ++i) {
+        ranks[i] = i;
+        if (pthread_cond_init(&amp;cond[i], NULL) != 0) {
+            fprintf(stderr, "pthread_cond_init failed\n");
+            return EXIT_FAILURE;
+        }
+    }
+    for (long i = 0; i &lt; thread_count; ++i) {
+        int rc = pthread_create(&amp;threads[i], NULL, Send_msg, &amp;ranks[i]);
+        if (rc != 0) {
+            fprintf(stderr, "pthread_create failed: %d\n", rc);
+            return EXIT_FAILURE;
+        }
+    }
+    for (int i = 0; i &lt; thread_count; ++i) pthread_join(threads[i], NULL);
+
+    for (int i = 0; i &lt; thread_count; ++i) {
+        free(messages[i]);
+        pthread_cond_destroy(&amp;cond[i]);
+    }
+    pthread_mutex_destroy(&amp;mutex);
+    free(cond);
+    free(messages);
+    free(ranks);
+    free(threads);
+    return EXIT_SUCCESS;
+}</code></pre></div>
+ <p class="small muted">Это шаблон только для одного раунда с единственной записью в каждый слот. Для повторяющихся раундов нужно обнулить/потребить слот, договориться о владении памятью сообщений и добавить идентификатор поколения или очередь; иначе старые значения могут быть приняты за новые.</p>
+</section>
+
+<section class="section" id="compare">
+ <div class="section-head"><div class="num">07</div><div><h2>Сравниваем три способа</h2><p>Как выбрать конструкцию под задачу.</p></div></div>
+ <div class="table-wrap"><table>
+  <thead><tr><th>Подход</th><th>Как ждёт поток</th><th>Плюсы</th><th>Риски / ограничения</th><th>Роль в конспекте</th></tr></thead>
+  <tbody>
+   <tr><td><strong>Холостой цикл</strong></td><td>Непрерывно проверяет счётчик.</td><td>Понятная идея; нет системного вызова на каждый опрос.</td><td>Занимает CPU; проблемы при oversubscription; без атомиков/синхронизации чтение может быть гонкой данных.</td><td>Простой, но проблемный барьер; массив счётчиков для разных этапов.</td></tr>
+   <tr><td><strong>Семафоры</strong></td><td><code>sem_wait</code> блокирует при нулевом значении.</td><td>Поток может спать до появления разрешения; счётчик разрешений сохраняется.</td><td>Нужно верно балансировать <code>post</code>/<code>wait</code>; для разных раундов нужно разделять фазы, чтобы не использовать чужие разрешения.</td><td>Отдельный семафор для каждого из NBARRIERS раундов плюс семафор для счётчика.</td></tr>
+   <tr><td><strong>Условные переменные</strong></td><td><code>pthread_cond_wait</code> атомарно отпускает мьютекс и блокирует поток, затем снова захватывает его.</td><td>Работают с произвольным предикатом; сигнал одному или broadcast всем; ожидание не крутится на CPU.</td><td>Всегда требуется связанный мьютекс и цикл <code>while</code> с проверкой состояния; для переиспользуемого барьера нужна защита от смешения поколений.</td><td>Основной механизм; подходит для исправленного многоразового барьера и кольцевой передачи сообщений.</td></tr>
+  </tbody>
+ </table></div>
+ <div class="callout"><strong>Шаблон, который стоит запомнить</strong>Общая переменная описывает состояние (предикат); мьютекс защищает доступ к состоянию; условная переменная позволяет спать, пока состояние может измениться; при пробуждении поток заново проверяет состояние.</div>
+</section>
+
+<section class="section" id="quiz">
+ <div class="section-head"><div class="num">08</div><div><h2>Проверь себя</h2><p>Отвечай без подсказок, затем нажми «Проверить тест».</p></div></div>
+ <form id="quizForm">
+  <div class="quiz" data-q="0" data-answer="1"><div class="quiz-q">1. Что гарантирует барьер?</div><label class="option"><input type="radio" name="q0" value="0"> Каждый поток проходит барьер сразу, как только до него дошёл.</label><label class="option"><input type="radio" name="q0" value="1"> Ни один поток не продолжает работу, пока не прибудут все участники.</label><label class="option"><input type="radio" name="q0" value="2"> В критической секции одновременно может находиться только один поток.</label><div class="feedback"></div></div>
+  <div class="quiz" data-q="1" data-answer="2"><div class="quiz-q">2. В чём ключевая проблема busy waiting в исходном примере?</div><label class="option"><input type="radio" name="q1" value="0"> Нельзя использовать массив счётчиков в C.</label><label class="option"><input type="radio" name="q1" value="1"> <code>pthread_mutex_lock</code> запрещён в цикле.</label><label class="option"><input type="radio" name="q1" value="2"> Поток расходует CPU, а незаблокированное чтение общего счётчика создаёт гонку данных.</label><div class="feedback"></div></div>
+  <div class="quiz" data-q="2" data-answer="0"><div class="quiz-q">3. Что делает <code>sem_wait</code>, если значение семафора равно нулю?</div><label class="option"><input type="radio" name="q2" value="0"> Блокирует поток до появления разрешения (или ошибки/прерывания согласно API).</label><label class="option"><input type="radio" name="q2" value="1"> Устанавливает значение в −1.</label><label class="option"><input type="radio" name="q2" value="2"> Немедленно возвращается с успешным результатом и ничего не делает.</label><div class="feedback"></div></div>
+  <div class="quiz" data-q="3" data-answer="1"><div class="quiz-q">4. Зачем <code>pthread_cond_wait</code> передаётся мьютекс?</div><label class="option"><input type="radio" name="q3" value="0"> Чтобы переменная cond автоматически превратилась в мьютекс.</label><label class="option"><input type="radio" name="q3" value="1"> Чтобы атомарно отпустить защиту на время ожидания и снова захватить её до возврата.</label><label class="option"><input type="radio" name="q3" value="2"> Чтобы будить всегда все потоки.</label><div class="feedback"></div></div>
+  <div class="quiz" data-q="4" data-answer="2"><div class="quiz-q">5. Почему predicate при <code>pthread_cond_wait</code> проверяют в <code>while</code>?</div><label class="option"><input type="radio" name="q4" value="0"> Потому что <code>while</code> быстрее <code>if</code> во всех компиляторах.</label><label class="option"><input type="radio" name="q4" value="1"> Чтобы поток автоматически сигнализировал остальным.</label><label class="option"><input type="radio" name="q4" value="2"> Из-за возможных spurious wakeup и потому, что условие может снова стать ложным до повторного захвата мьютекса.</label><div class="feedback"></div></div>
+  <div class="quiz" data-q="5" data-answer="0"><div class="quiz-q">6. Что делает <code>pthread_cond_broadcast</code>?</div><label class="option"><input type="radio" name="q5" value="0"> Пробуждает все потоки, которые сейчас ждут на этой условной переменной.</label><label class="option"><input type="radio" name="q5" value="1"> Гарантирует, что все потоки немедленно выполнятся на CPU.</label><label class="option"><input type="radio" name="q5" value="2"> Сбрасывает значение связанного счётчика.</label><div class="feedback"></div></div>
+  <div class="quiz" data-q="6" data-answer="1"><div class="quiz-q">7. Как исправленный барьер узнаёт, что пробуждение относится к новому раунду?</div><label class="option"><input type="radio" name="q6" value="0"> Проверяет, был ли вызван broadcast когда-нибудь.</label><label class="option"><input type="radio" name="q6" value="1"> Сравнивает сохранённое при входе поколение с текущим generation.</label><label class="option"><input type="radio" name="q6" value="2"> Сравнивает время работы потоков.</label><div class="feedback"></div></div>
+  <div class="quiz" data-q="7" data-answer="2"><div class="quiz-q">8. Для чего формула <code>(my_rank + 1) % thread_count</code>?</div><label class="option"><input type="radio" name="q7" value="0"> Чтобы пропускать каждый второй поток.</label><label class="option"><input type="radio" name="q7" value="1"> Чтобы получить номер предыдущего потока без циклического перехода.</label><label class="option"><input type="radio" name="q7" value="2"> Чтобы отправить сообщение следующему потоку и перейти от последнего к потоку 0.</label><div class="feedback"></div></div>
+  <div class="quiz-actions"><button class="btn primary" type="button" id="gradeQuiz">Проверить тест</button><button class="btn" type="button" id="clearQuiz">Сбросить ответы</button><span class="score" id="quizScore"></span></div>
+ </form>
+</section>
+
+<section class="section" id="practice">
+ <div class="section-head"><div class="num">09</div><div><h2>Практикум на C</h2><p>Задачи идут от понимания кода к самостоятельной реализации. Сначала реши, затем открой подсказку/решение.</p></div></div>
+ <details class="exercise" open><summary><span class="tag blue">Задача 1</span> Проследить барьер для 4 потоков</summary><div class="exercise-body"><div class="exercise-meta"><span class="tag">Уровень: базовый</span><span class="tag">Симуляция выше</span></div><p>Запиши по шагам, что произойдёт, если потоки 1, 3 и 0 увеличили счётчик, а поток 2 ещё не дошёл. Кто может продолжить работу и почему?</p><textarea class="inline-input" placeholder="Твой ответ: ..."></textarea><button class="btn" data-reveal="sol1">Показать разбор</button><div class="reveal" id="sol1"><div class="task-box"><strong>Разбор:</strong> счётчик равен 3 из 4. Потоки, которые уже дошли, должны ждать. После прибытия потока 2 условие количества участников выполнено и можно выпускать все четыре. Холостой цикл из конспекта пытается это обнаружить постоянным чтением counter, но его чтение без синхронизации некорректно в модели памяти C.</div></div></div></details>
+ <details class="exercise"><summary><span class="tag blue">Задача 2</span> Найти ошибки в busy waiting</summary><div class="exercise-body"><p>В этом фрагменте есть две разные проблемы. Назови их и предложи корректное направление исправления.</p><div class="codebox"><div class="codebar"><span>Код для анализа</span></div><pre><code>counter++;
+while (counter != NTHREADS) { }</code></pre></div><textarea class="inline-input" placeholder="Назови две проблемы и способы исправить... "></textarea><button class="btn" data-reveal="sol2">Показать ответ</button><div class="reveal" id="sol2"><div class="task-box"><strong>Ответ:</strong> (1) инкремент может терять обновления, если счётчик общий и не защищён; (2) чтение в пустом цикле активно расходует CPU и, если оно не синхронизировано, является гонкой данных. На практике — защищать изменение общего состояния и предпочтительно использовать корректный блокирующий примитив, например условную переменную с mutex и проверкой предиката в while.</div></div></div></details>
+ <details class="exercise"><summary><span class="tag green">Задача 3</span> Реализовать многоразовый барьер</summary><div class="exercise-body"><div class="exercise-meta"><span class="tag">Уровень: средний</span><span class="tag">pthread_mutex_t + pthread_cond_t</span></div><p>Реализуй функцию <code>barrier_wait</code> для структуры с полями <code>count</code>, <code>parties</code> и <code>generation</code>. Требование: барьер должен корректно проходиться минимум 100 раз каждым потоком.</p><textarea class="inline-input" placeholder="Напиши алгоритм barrier_wait(...) здесь..."></textarea><button class="btn" data-reveal="sol3">Открыть эталонный алгоритм</button><div class="reveal" id="sol3"><div class="task-box"><pre><code>pthread_mutex_lock(&amp;b-&gt;mutex);
+unsigned g = b-&gt;generation;
+if (++b-&gt;count == b-&gt;parties) {
+    b-&gt;count = 0;
+    ++b-&gt;generation;
+    pthread_cond_broadcast(&amp;b-&gt;cond);
+} else {
+    while (g == b-&gt;generation)
+        pthread_cond_wait(&amp;b-&gt;cond, &amp;b-&gt;mutex);
+}
+pthread_mutex_unlock(&amp;b-&gt;mutex);</code></pre><p>Почему работает: последний меняет поколение до пробуждения, а остальные ждут именно изменения поколения своего раунда.</p></div></div></details>
+ <details class="exercise"><summary><span class="tag green">Задача 4</span> Исправить ожидание условной переменной</summary><div class="exercise-body"><p>Перепиши цикл из листинга 3 так, чтобы он учитывал и spurious wakeup, и многоразовое использование барьера. Объясни, почему простой <code>if</code> не подходит.</p><textarea class="inline-input" placeholder="Исправленный алгоритм... "></textarea><button class="btn" data-reveal="sol4">Проверить решение</button><div class="reveal" id="sol4"><div class="task-box"><strong>Ключ:</strong> запомнить <code>generation</code> под мьютексом; увеличить <code>count</code>; последний участник обнуляет count, инкрементирует generation и вызывает broadcast; остальные ожидают в <code>while (old_generation == generation) pthread_cond_wait(...)</code>. Цикл должен проверять условие, а не код возврата функции ожидания.</div></div></div></details>
+ <details class="exercise"><summary><span class="tag orange">Задача 5</span> Написать кольцевую рассылку</summary><div class="exercise-body"><div class="exercise-meta"><span class="tag">Уровень: средний</span><span class="tag">Массив сообщений</span></div><p>Создай N потоков. Каждый отправляет строку следующему участнику, ждёт собственное сообщение и печатает его. Используй <code>dest = (rank + 1) % N</code>, общий mutex и по одной условной переменной на получателя. Публикация указателя и проверка <code>messages[rank]</code> должны быть защищены одним и тем же mutex.</p><textarea class="inline-input" placeholder="Структура данных, код worker(), инициализация в main()... "></textarea><button class="btn" data-reveal="sol5">Показать чек-лист</button><div class="reveal" id="sol5"><div class="task-box"><ul class="checklist"><li><label><input type="checkbox">Вычисляю получателя с остатком от деления.</label></li><li><label><input type="checkbox">Инициализирую messages[] значениями NULL и каждую cond.</label></li><li><label><input type="checkbox">Публикую указатель под mutex.</label></li><li><label><input type="checkbox">Вызываю signal под mutex.</label></li><li><label><input type="checkbox">Жду в while, пока мой слот пуст, с тем же mutex.</label></li><li><label><input type="checkbox">После join освобождаю сообщения, уничтожаю cond/mutex и освобождаю массивы.</label></li></ul></div></div></div></details>
+ <details class="exercise"><summary><span class="tag orange">Задача 6</span> Измерить время</summary><div class="exercise-body"><p>На основе листингов конспекта измерь время тысяч проходов для: (A) активного ожидания, (B) семафоров, (C) условных переменных. Проведи тест при числе потоков не больше числа CPU и при большем числе. Сформулируй, почему результаты меняются.</p><textarea class="inline-input" placeholder="План эксперимента, таблица результатов и объяснение... "></textarea><button class="btn" data-reveal="sol6">Подсказка</button><div class="reveal" id="sol6"><div class="task-box">Фиксируй одну и ту же машину, компилятор, флаги сборки, число раундов, число потоков и входные данные. Запускай несколько раз и сравнивай медиану. Busy waiting часто страдает при oversubscription, но примитивы блокировки также имеют издержки переключения контекста: измерения нужны для конкретной нагрузки, а не для универсального тезиса «один всегда быстрее».</div></div></div></details>
+ <div class="callout good"><strong>Команды компиляции</strong><code>gcc -std=c11 -Wall -Wextra -Wpedantic -O2 file.c -o app -pthread</code><br>Запуск: <code>./app</code> или <code>./app 4</code> — в зависимости от того, какие аргументы читает программа. На Windows удобно выполнять в WSL/Ubuntu.</div>
+</section>
+
+<section class="section" id="recap">
+ <div class="section-head"><div class="num">10</div><div><h2>Финальная карта понятий</h2><p>Если можешь объяснить каждую строку без подсказки — основа семинара усвоена.</p></div></div>
+ <div class="grid two">
+  <div class="card"><h3>Термины</h3><ul><li><strong>Barrier:</strong> все участники достигают одной точки прежде, чем продолжить.</li><li><strong>Busy waiting:</strong> ожидание через повторную проверку условия.</li><li><strong>Semaphore:</strong> счётчик разрешений; wait потребляет разрешение, post добавляет.</li><li><strong>Condition variable:</strong> механизм ожидания изменения состояния в связке с mutex.</li><li><strong>Spurious wakeup:</strong> возврат из ожидания не означает, что предикат истинен.</li><li><strong>Generation:</strong> номер раунда для корректного повторного использования барьера.</li></ul></div>
+  <div class="card"><h3>Самопроверка</h3><ul class="checklist" id="finalChecklist"><li><label><input type="checkbox" data-progress>Могу объяснить барьер на примере 4 потоков.</label></li><li><label><input type="checkbox" data-progress>Могу назвать проблемы busy waiting из конспекта.</label></li><li><label><input type="checkbox" data-progress>Могу проследить семафорный алгоритм по шагам.</label></li><li><label><input type="checkbox" data-progress>Могу объяснить атомарное отпускание/повторный захват mutex в cond_wait.</label></li><li><label><input type="checkbox" data-progress>Могу объяснить, почему нужен while и что такое generation.</label></li><li><label><input type="checkbox" data-progress>Могу написать безопасный кольцевой обмен сообщений.</label></li><li><label><input type="checkbox" data-progress>Выполнил хотя бы 3 практические задачи.</label></li></ul></div>
+ </div>
+</section>
+
+<section class="section" id="refs">
+ <div class="section-head"><div class="num">↗</div><div><h2>Документация и дальнейшее чтение</h2><p>Основной источник — приложенный конспект. Ссылки ниже уточняют семантику POSIX/Linux.</p></div></div>
+ <div class="card"><ul>
+  <li><a href="https://man7.org/linux/man-pages/man3/pthread_cond_wait.3.html" target="_blank" rel="noopener">Linux man-pages: pthread_cond_wait, pthread_cond_signal, pthread_cond_broadcast</a> — атомарное ожидание, повторный захват mutex, signal/broadcast и правила использования.</li>
+  <li><a href="https://man7.org/linux/man-pages/man3/sem_wait.3.html" target="_blank" rel="noopener">Linux man-pages: sem_wait / sem_trywait / sem_timedwait</a> — блокировка при нулевом значении и возвраты при ошибках.</li>
+  <li><a href="https://man7.org/linux/man-pages/man3/sem_post.3.html" target="_blank" rel="noopener">Linux man-pages: sem_post</a> — увеличение счётчика семафора.</li>
+  <li><a href="https://man7.org/linux/man-pages/man7/pthreads.7.html" target="_blank" rel="noopener">Linux man-pages: pthreads(7)</a> — обзор потоков POSIX и связанных интерфейсов.</li>
+  <li><a href="https://pubs.opengroup.org/onlinepubs/9799919799/functions/pthread_cond_wait.html" target="_blank" rel="noopener">The Open Group / POSIX: pthread_cond_wait</a> — спецификация интерфейса.</li>
+ </ul><p class="small muted">Учебные оговорки: в исходных примерах PDF есть упрощения — особенно в busy waiting, условии цикла ожидания в листинге 3 и защите массива сообщений в листинге 4. На странице они не скрыты: сначала разобрана идея конспекта, затем показано, что именно следует усилить для корректной реализации.</p></div>
+</section>
+<div class="foot">Интерактивный автономный учебник · Семинар 3: «Pthreads: барьеры и условные переменные». Все симуляции и тесты работают локально в браузере; для компиляции C нужен GCC/Clang с поддержкой pthreads.</div>
+</div>
+</main>
+</div>
+<button class="backtop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Наверх">↑</button>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+// Copy buttons, with a fallback for local HTML files.
+$$('[data-copy]').forEach(btn=>btn.addEventListener('click',async()=>{const el=document.getElementById(btn.dataset.copy);if(!el)return;const text=el.innerText;try{await navigator.clipboard.writeText(text);btn.textContent='Скопировано';}catch(e){const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');btn.textContent='Скопировано';}catch(_){btn.textContent='Выдели код вручную';}ta.remove();}setTimeout(()=>btn.textContent='Копировать код',1600);}));
+// Progress checkboxes are stored in this browser only.
+const progBoxes=$$('input[data-progress]');
+function updateProgress(){const n=progBoxes.filter(x=>x.checked).length;const p=Math.round(n/Math.max(1,progBoxes.length)*100);$('#progressLabel').textContent=p+'%';$('#progressFill').style.width=p+'%';try{localStorage.setItem('seminar3-checks',JSON.stringify(progBoxes.map(x=>x.checked)));}catch(e){}}
+try{const saved=JSON.parse(localStorage.getItem('seminar3-checks')||'[]');progBoxes.forEach((x,i)=>x.checked=!!saved[i]);}catch(e){}
+progBoxes.forEach(x=>x.addEventListener('change',updateProgress));updateProgress();
+$('#resetProgress').addEventListener('click',()=>{progBoxes.forEach(x=>x.checked=false);updateProgress();});
+// Mark current navigation item based on scroll position.
+const navLinks=$$('#navigation a');const sections=navLinks.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){navLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));}})},{rootMargin:'-18% 0px -70% 0px'});sections.forEach(s=>obs.observe(s));
+// Barrier simulator
+let arrived=0, passed=false;function renderBarrier(){const root=$('#barrierThreads');root.innerHTML='';for(let i=0;i<4;i++){const d=document.createElement('div');d.className='thread-card '+(passed?'passed':i<arrived?'waiting':'');d.innerHTML='<div class="circle">'+i+'</div><strong>Поток '+i+'</strong><small>'+(passed?'Прошёл':i<arrived?'Прибыл · ждёт': 'Выполняет этап')+'</small>';root.appendChild(d);}$('#barrierState').textContent=passed?'4 из 4 · открыт':' '+arrived+' из 4';$('#arriveBtn').disabled=passed;$('#barrierMsg').textContent=passed?'Все 4 участника достигли барьера — теперь группа может продолжить работу.':arrived===0?'Все потоки выполняют работу. Начни отмечать прибывшие потоки.':arrived+' из 4 потоков у барьера. Прибывшие ждут, пока завершит работу оставшийся поток(и).';}
+$('#arriveBtn').addEventListener('click',()=>{arrived=Math.min(4,arrived+1);if(arrived===4)passed=true;renderBarrier();});$('#barrierReset').addEventListener('click',()=>{arrived=0;passed=false;renderBarrier();});renderBarrier();
+// Semaphore model: waiting calls accumulate if no stored token; post releases a waiter or stores a token.
+let semVal=0, semWaiting=0;function semRender(note){$('#semValue').textContent=semVal;$('#semBlocked').textContent='Ожидающих: '+semWaiting;$('#semExplanation').textContent=note;}
+$('#semStart').addEventListener('input',e=>{semVal=Number(e.target.value);semWaiting=0;semRender('Модель сброшена к значению '+semVal+'. При wait значение > 0 уменьшается; при нуле вызов блокируется.');});
+$('#semWaitBtn').addEventListener('click',()=>{if(semVal>0){semVal--;semRender('sem_wait(): разрешение было доступно, счётчик уменьшен на 1. Поток продолжает работу.');}else{semWaiting++;semRender('sem_wait(): счётчик был 0. Новый вызов заблокирован; ожидающих в модели: '+semWaiting+'.');}});
+$('#semPostBtn').addEventListener('click',()=>{if(semWaiting>0){semWaiting--;semRender('sem_post(): одно разрешение передано одному ожидающему потоку; он может продолжить. В упрощённой модели счётчик остаётся '+semVal+'.');}else{semVal=Math.min(99,semVal+1);semRender('sem_post(): ожидающих нет, разрешение сохранено в счётчике. Текущее значение: '+semVal+'.');}$('#semStart').value=Math.min(5,semVal);});
+$('#semResetBtn').addEventListener('click',()=>{$('#semStart').value=0;semVal=0;semWaiting=0;semRender('Семафор сброшен к 0. Первый sem_wait() заблокируется.');});semRender('Значение 0: вызов sem_wait() заблокирует поток, пока не появится разрешение.');
+// Ring simulator
+function renderRing(){const n=Number($('#ringN').value);$('#ringNVal').textContent=n;const root=$('#ringView');root.innerHTML='';for(let i=0;i<n;i++){const dest=(i+1)%n;const d=document.createElement('div');d.className='thread-card';d.innerHTML='<div class="circle">'+i+'</div><strong>Поток '+i+'</strong><small>→ поток '+dest+'</small>';root.appendChild(d);}$('#ringResult').textContent='Каждый поток отправит «Hello to DEST from SRC» следующему потоку.';}
+$('#ringN').addEventListener('input',renderRing);$('#ringClear').addEventListener('click',renderRing);$('#ringRun').addEventListener('click',()=>{const n=Number($('#ringN').value);const root=$('#ringView');Array.from(root.children).forEach((d,i)=>{d.classList.add('passed');d.querySelector('small').textContent='Получено: Hello to '+i+' from '+((i+n-1)%n);});$('#ringResult').textContent='Раунд завершён: поток i получил сообщение от (i − 1 + N) % N. Поток 0 получил сообщение от '+(n-1)+', а последний поток отправил сообщение потоку 0.';});renderRing();
+// Quiz scoring
+const explanations=[
+'Барьер открывает путь только после прибытия всех его участников.',
+'Холостой цикл расходует CPU. В исходном коде чтение counter без синхронизации — гонка данных.',
+'При нуле sem_wait блокируется; разрешение сохранится после sem_post и может быть потреблено позднее.',
+'cond_wait отпускает мьютекс атомарно с началом ожидания, затем повторно захватывает до возврата.',
+'Возврат из cond_wait не является доказательством истинности предиката: его нужно проверять повторно под mutex.',
+'broadcast пробуждает все потоки, которые ждут на конкретной condition variable; выполнение не гарантировано мгновенно.',
+'Generation помогает отличить пробуждение текущего раунда от состояния следующего.',
+'Остаток от деления даёт круговую адресацию: для последнего потока dest становится 0.'
+];
+$('#gradeQuiz').addEventListener('click',()=>{let score=0;$$('.quiz').forEach((q,i)=>{const chosen=q.querySelector('input:checked');const correct=chosen&&chosen.value===q.dataset.answer;const fb=q.querySelector('.feedback');fb.className='feedback show '+(correct?'ok':'bad');fb.textContent=(correct?'Верно. ':'Пока неверно. ')+explanations[i];if(correct)score++;});$('#quizScore').textContent='Результат: '+score+' из '+$$('.quiz').length;});
+$('#clearQuiz').addEventListener('click',()=>{$$('#quizForm input[type=radio]').forEach(x=>x.checked=false);$$('.feedback').forEach(x=>{x.className='feedback';x.textContent='';});$('#quizScore').textContent='';});
+// Exercise reveal buttons
+$$('[data-reveal]').forEach(btn=>btn.addEventListener('click',()=>{const el=document.getElementById(btn.dataset.reveal);if(!el)return;el.classList.toggle('show');btn.textContent=el.classList.contains('show')?'Скрыть':'Показать разбор';}));
+})();
+</script>
+</body>
+</html>

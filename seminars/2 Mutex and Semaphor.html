@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Интерактивный учебник по семинару 2: мьютексы и семафоры POSIX Threads на C.">
+<title>Семинар 2 — Pthreads: мьютексы и семафоры</title>
+<style>
+:root{--bg:#f4f6fb;--paper:#fff;--ink:#19233b;--muted:#5e6a82;--line:#dfe5f0;--brand:#4c50c8;--brand2:#797ce9;--soft:#eef0ff;--teal:#087f8c;--tealsoft:#e4f7f8;--amber:#996116;--ambersoft:#fff4df;--red:#b43d4c;--redsoft:#fff0f1;--green:#18794e;--greensoft:#e9f8ef;--code:#131b2d;--codeink:#e9eefc;--shadow:0 12px 32px rgba(32,43,77,.07);--radius:18px}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.68 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--brand);text-decoration-thickness:1px;text-underline-offset:3px}a:hover{color:#262a91}button,input,select,textarea{font:inherit}button{cursor:pointer}.hero{background:radial-gradient(circle at 86% 12%,rgba(132,139,255,.36),transparent 29%),linear-gradient(125deg,#161e38,#323c76 64%,#4c50c8);color:#fff;padding:54px max(22px,calc((100vw - 1280px)/2)) 48px}.eyebrow{letter-spacing:.12em;text-transform:uppercase;font-size:.76rem;font-weight:800;color:#c7ccff}.hero h1{font-size:clamp(2.1rem,4.4vw,4rem);line-height:1.09;max-width:880px;margin:.45rem 0 1rem;letter-spacing:-.04em}.hero p{font-size:1.11rem;max-width:800px;color:#e5e8ff;margin:0}.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:25px}.pill{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.09);padding:7px 12px;border-radius:999px;font-size:.86rem}.layout{max-width:1320px;margin:0 auto;padding:30px 22px 80px;display:grid;grid-template-columns:250px minmax(0,1fr);gap:26px;align-items:start}.sidebar{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px 16px;box-shadow:var(--shadow)}.sidebar h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 12px}.sidebar a{display:block;color:#47516b;text-decoration:none;padding:7px 9px;border-radius:8px;font-size:.91rem;line-height:1.4}.sidebar a:hover{background:var(--soft);color:var(--brand)}.progress{height:8px;background:#edf0f8;border-radius:999px;overflow:hidden;margin:8px 0}.progress>span{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--brand),#35a8ac);transition:width .25s}.small{font-size:.86rem;color:var(--muted)}main{min-width:0}.section{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:clamp(20px,3vw,34px);margin-bottom:24px;box-shadow:var(--shadow)}.section-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:18px}.section-num{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:13px;background:var(--soft);color:var(--brand);font-weight:900}.section h2{font-size:clamp(1.45rem,2.4vw,2rem);line-height:1.2;margin:0 0 7px;letter-spacing:-.025em}.section h3{font-size:1.16rem;line-height:1.35;margin:28px 0 10px}.section h4{font-size:1rem;margin:20px 0 8px}.section p{margin:10px 0}.section-intro{color:var(--muted);margin:0}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.mini-card{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff}.mini-card h3,.mini-card h4{margin:0 0 8px}.mini-card p{margin:0;font-size:.94rem;color:#48536b}.callout{border-left:4px solid var(--brand);background:var(--soft);padding:13px 16px;border-radius:0 12px 12px 0;margin:18px 0}.callout.warn{border-color:#d79a32;background:var(--ambersoft)}.callout.good{border-color:#1a9a71;background:var(--greensoft)}.callout.danger{border-color:#d45565;background:var(--redsoft)}.tag{display:inline-block;border-radius:6px;padding:2px 7px;font-size:.78rem;font-weight:800;background:#eef1f8;color:#46516b;vertical-align:middle}.tag.blue{background:var(--soft);color:var(--brand)}.tag.green{background:var(--greensoft);color:var(--green)}.tag.orange{background:var(--ambersoft);color:var(--amber)}.tag.red{background:var(--redsoft);color:var(--red)}.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:14px 0 18px}table{border-collapse:collapse;width:100%;font-size:.94rem;min-width:590px}th,td{text-align:left;vertical-align:top;padding:12px 14px;border-bottom:1px solid var(--line)}th{background:#f2f4fb;font-size:.83rem;text-transform:uppercase;letter-spacing:.035em;color:#49546e}tr:last-child td{border-bottom:0}td code, p code, li code, summary code{background:#f0f2fa;border:1px solid #e5e8f4;padding:.1em .32em;border-radius:5px;font-size:.9em;color:#343b7f}.codebox{position:relative;margin:14px 0 19px;background:var(--code);border-radius:14px;overflow:hidden;border:1px solid #26304a}.codebar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 13px;background:#1c2740;color:#bfcaf0;font-size:.8rem}.codebar button{border:1px solid #596585;background:#293653;color:#fff;border-radius:8px;padding:5px 9px;font-size:.8rem}.codebox pre{margin:0;padding:18px;overflow:auto;color:var(--codeink);font:13.5px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;tab-size:4;white-space:pre}.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0}.flow .step{padding:10px 12px;border-radius:10px;background:#f0f2ff;border:1px solid #dce0ff;font-weight:650;font-size:.91rem}.flow .arrow{color:#737ba2;font-weight:900}.owner-track{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}.owner-state{border:1px solid var(--line);border-radius:13px;padding:14px;text-align:center;background:#fafbff}.owner-state strong{display:block;font-size:.98rem}.owner-state span{display:block;font-size:.84rem;color:var(--muted);margin-top:5px}.owner-state.active{border-color:#8c90f3;background:var(--soft);box-shadow:inset 0 0 0 1px #c6c9ff}.deadlock-controls,.sim-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:13px 0}.btn{border:0;border-radius:10px;padding:10px 14px;background:var(--brand);color:#fff;font-weight:750}.btn:hover{filter:brightness(.95)}.btn.secondary{color:#30395c;background:#edf0fa;border:1px solid #dbe1f1}.btn.ghost{background:transparent;color:var(--brand);border:1px solid #cdd2f8}.btn.smallbtn{font-size:.86rem;padding:7px 10px}.result{padding:13px 15px;border-radius:11px;background:#f3f5fb;border:1px solid var(--line);margin:12px 0;min-height:48px}.result.success{background:var(--greensoft);border-color:#b3e7c7}.result.error{background:var(--redsoft);border-color:#f4b6bf}.sim-counter{display:flex;align-items:center;justify-content:center;gap:20px;padding:20px;border-radius:15px;background:linear-gradient(135deg,#eff0ff,#e7f9f8);margin:17px 0}.counter-value{width:112px;height:112px;border-radius:50%;display:grid;place-items:center;background:#fff;border:7px solid #c9cdfc;box-shadow:0 5px 20px rgba(71,77,187,.13);font-size:2.8rem;font-weight:900;color:var(--brand)}.counter-label{max-width:250px}.counter-label strong{display:block;font-size:1.03rem}.counter-label span{font-size:.89rem;color:var(--muted)}.log{background:#f7f8fc;border:1px solid var(--line);padding:12px;border-radius:10px;max-height:200px;overflow:auto;font: .86rem/1.6 ui-monospace,monospace}.log div{padding:3px 0;border-bottom:1px dashed #e4e7f0}.log div:last-child{border:0}.ring{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0}.ring-node{border:1px solid #cbd1f4;border-radius:12px;background:#f4f5ff;padding:12px;text-align:center}.ring-node b{display:block;color:var(--brand);font-size:1.05rem}.ring-node small{display:block;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}.quiz{border:1px solid var(--line);border-radius:14px;padding:17px;margin:15px 0;background:#fcfcff}.quiz h4{margin:0 0 12px}.options{display:grid;gap:8px}.option{width:100%;text-align:left;padding:10px 12px;border-radius:9px;border:1px solid #d9dfef;background:#fff;color:var(--ink)}.option:hover{border-color:#9095ed;background:#f6f6ff}.option.correct{border-color:#57b985;background:var(--greensoft)}.option.incorrect{border-color:#e5919d;background:var(--redsoft)}.feedback{font-size:.91rem;font-weight:650;margin:10px 0 0;min-height:0}.feedback:empty{display:none}.task{border:1px solid var(--line);border-radius:15px;padding:18px;margin:15px 0}.task-title{display:flex;gap:10px;align-items:flex-start}.task-title .n{flex:0 0 30px;height:30px;border-radius:9px;background:var(--soft);color:var(--brand);display:grid;place-items:center;font-weight:900}.task h3{margin:0 0 7px;font-size:1.08rem}.task p{margin:6px 0}.task details{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}.task summary{cursor:pointer;font-weight:750;color:var(--brand)}.practice textarea{width:100%;min-height:190px;border:1px solid #cfd5e7;border-radius:12px;padding:13px;font:13px/1.6 ui-monospace,monospace;background:#fbfcff;color:#20283c}.checklist{display:grid;gap:8px;margin:12px 0}.checkline{display:flex;align-items:flex-start;gap:9px;font-size:.94rem}.checkline input{margin-top:6px;accent-color:var(--brand)}.resource{display:flex;gap:11px;align-items:flex-start;border-bottom:1px solid var(--line);padding:12px 0}.resource:last-child{border-bottom:0}.resource .bullet{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:9px;background:#eef0ff;color:var(--brand);font-weight:900}.resource p{margin:2px 0 0;font-size:.9rem;color:var(--muted)}.footer{text-align:center;color:var(--muted);font-size:.84rem;padding:10px 20px 35px}.completion{display:flex;align-items:center;gap:9px;font-size:.86rem;color:var(--muted);margin-top:18px;padding-top:13px;border-top:1px solid var(--line)}.completion input{accent-color:var(--brand);width:17px;height:17px}.definition{font-size:1.05rem;padding:15px 17px;border:1px solid #d6daf8;background:#f7f7ff;border-radius:13px}.kbd{font: .82rem ui-monospace,monospace;border:1px solid #cbd1df;border-bottom-width:2px;border-radius:5px;background:#fff;padding:2px 5px}.muted{color:var(--muted)}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:relative;top:auto;max-height:none;display:none}.sidebar.show{display:block}.mobile-toc{display:block!important}.grid3{grid-template-columns:1fr 1fr}}@media(max-width:640px){.hero{padding-top:36px;padding-bottom:34px}.layout{padding:16px 12px 50px}.section{padding:19px 16px}.grid2,.grid3{grid-template-columns:1fr}.owner-track{grid-template-columns:1fr}.ring{grid-template-columns:repeat(2,minmax(0,1fr))}.sim-counter{flex-direction:column;text-align:center}.counter-label{max-width:none}.section-head{gap:10px}.section-num{flex-basis:35px;height:35px}.codebox pre{font-size:12px;padding:13px}}.mobile-toc{display:none}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="eyebrow">Учебник · Распределённые вычисления · C / POSIX Threads</div>
+  <h1>Семинар 2. Pthreads: мьютексы и семафоры</h1>
+  <p>Разберём, как координировать потоки: защищать общие данные, избегать взаимных блокировок, передавать сигналы готовности и строить кольцевой обмен сообщениями. После теории — интерактивные модели и задачи на C.</p>
+  <div class="hero-meta"><span class="pill">Материал: все 7 страниц конспекта</span><span class="pill">Ориентир: 45–70 минут</span><span class="pill">Можно работать офлайн</span></div>
+</header>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+  <h2>Содержание</h2>
+  <a href="#map">0. Карта темы</a><a href="#mutex">1. Что такое мьютекс</a><a href="#types">2. Типы мьютексов</a><a href="#deadlock">3. Дэдлок</a><a href="#listing1">4. Разбор листинга 1</a><a href="#semaphore">5. Семафор</a><a href="#ring">6. Кольцевая передача сообщений</a><a href="#listing2">7. Полный пример на C</a><a href="#compare">8. Сравнение примитивов</a><a href="#exercises">9. Задачи на C</a><a href="#quiz">10. Контрольные вопросы</a><a href="#cheatsheet">11. Шпаргалка и ссылки</a>
+  <div style="margin-top:18px"><div class="small">Прогресс изучения</div><div class="progress"><span id="progressBar"></span></div><div class="small" id="progressText">0 из 11 разделов отмечено</div></div>
+</aside>
+<main>
+<div class="mobile-toc"><button class="btn secondary" id="toggleToc">Показать содержание и прогресс</button></div>
+
+<section class="section" id="map" data-section>
+  <div class="section-head"><div class="section-num">0</div><div><h2>Карта темы: какую проблему решает синхронизация?</h2><p class="section-intro">Потоки внутри процесса могут обращаться к общей памяти. Чтобы взаимодействие было корректным, нужно согласовать доступ к данным и событиям.</p></div></div>
+  <div class="grid2">
+    <div class="mini-card"><h3>Мьютекс — «ключ от комнаты»</h3><p>Защищает критическую секцию: в один момент времени мьютексом владеет не более одного потока. Другие потоки ждут, пока владелец его освободит.</p><div class="flow"><span class="step">lock</span><span class="arrow">→</span><span class="step">критическая секция</span><span class="arrow">→</span><span class="step">unlock</span></div></div>
+    <div class="mini-card"><h3>Семафор — «счётчик разрешений»</h3><p>Хранит неотрицательное количество разрешений. <code>sem_wait</code> забирает одно разрешение или блокируется; <code>sem_post</code> добавляет разрешение или будит ожидающий поток.</p><div class="flow"><span class="step">wait: −1</span><span class="arrow">↔</span><span class="step">счётчик</span><span class="arrow">↔</span><span class="step">post: +1</span></div></div>
+  </div>
+  <div class="callout"><strong>Главная разница:</strong> мьютекс отвечает на вопрос «кто сейчас владеет доступом?», а семафор — «сколько разрешений доступно?». Это не взаимозаменяемые понятия, даже если бинарный семафор иногда применяют для похожей задачи.</div>
+  <p>В конспекте рассматриваются два инструмента: <code>pthread_mutex_t</code> и <code>sem_t</code>. Они не создают потоки сами по себе — они синхронизируют уже созданные потоки или, при подходящем размещении семафора в общей памяти, процессы.</p>
+  <label class="completion"><input type="checkbox" class="complete-toggle"> Отметить раздел как изученный</label>
+</section>
+
+<section class="section" id="mutex" data-section>
+  <div class="section-head"><div class="section-num">1</div><div><h2>Мьютекс: инициализация, захват и освобождение</h2><p class="section-intro">Мьютекс — примитив взаимного исключения (mutual exclusion), которому в pthreads соответствует тип <code>pthread_mutex_t</code>.</p></div></div>
+  <div class="definition"><strong>Интуитивно:</strong> когда поток успешно вызывает <code>pthread_mutex_lock(&amp;m)</code>, он захватывает мьютекс <code>m</code> и становится владельцем. Пока он владеет им, другой поток не может одновременно захватить тот же мьютекс обычным вызовом <code>lock</code>.</div>
+  <h3>Три ключевые операции</h3>
+  <div class="table-wrap"><table><thead><tr><th>Функция</th><th>Назначение</th><th>На что обратить внимание</th></tr></thead><tbody>
+  <tr><td><code>pthread_mutex_init(&amp;m, attr)</code></td><td>Инициализировать объект мьютекса.</td><td><code>attr</code> задаёт атрибуты; <code>NULL</code> означает атрибуты по умолчанию.</td></tr>
+  <tr><td><code>pthread_mutex_lock(&amp;m)</code></td><td>Захватить мьютекс.</td><td>Если им владеет другой поток, вызывающий обычно блокируется, пока мьютекс не освободят.</td></tr>
+  <tr><td><code>pthread_mutex_unlock(&amp;m)</code></td><td>Освободить мьютекс.</td><td>Разблокировать его должен владелец. Попытка со стороны другого потока может быть ошибкой или неопределённым поведением — это зависит от типа.</td></tr>
+  <tr><td><code>pthread_mutex_destroy(&amp;m)</code></td><td>Освободить ресурсы объекта.</td><td>Уничтожать можно после того, как работа с мьютексом завершена: его больше не держат и на нём не ждут.</td></tr>
+  </tbody></table></div>
+  <h3>Жизненный цикл</h3>
+  <div class="flow"><span class="step">инициализация</span><span class="arrow">→</span><span class="step">lock</span><span class="arrow">→</span><span class="step">критическая секция</span><span class="arrow">→</span><span class="step">unlock</span><span class="arrow">→</span><span class="step">повторное использование</span><span class="arrow">→</span><span class="step">destroy</span></div>
+  <p>Пример защищённого инкремента:</p>
+  <div class="codebox"><div class="codebar"><span>Минимальная схема критической секции</span><button data-copy="mutex-snippet">Копировать код</button></div><pre id="mutex-snippet"><code>pthread_mutex_lock(&amp;mutex);
+shared_counter++;      /* критическая секция */
+pthread_mutex_unlock(&amp;mutex);</code></pre></div>
+  <p>Вызовы <code>lock</code> и <code>unlock</code> образуют пару. Между ними должны находиться только те операции, которые действительно требуют защиты. Если сделать критическую секцию слишком большой, потоки будут дольше ждать; если защитить не все обращения к общим данным, гонка всё равно возможна.</p>
+  <div class="owner-track"><div class="owner-state active"><strong>1. Свободен</strong><span>Владелец отсутствует</span></div><div class="owner-state"><strong>2. Захвачен потоком A</strong><span>A вошёл в защищённую область</span></div><div class="owner-state"><strong>3. Поток B ждёт</strong><span>B продолжит после unlock от A</span></div></div>
+  <div class="callout warn"><strong>Правило владения:</strong> мьютекс не является обычной переменной-счётчиком. По смыслу его освобождает поток-владелец. Не используйте <code>unlock</code> как способ «разбудить» поток, если этот поток не захватывал мьютекс.</div>
+  <h3>Создание атрибутов</h3>
+  <p>В конспекте используется <code>pthread_mutexattr_settype</code>, чтобы выбрать тип мьютекса. Перед настройкой объект атрибутов необходимо инициализировать функцией <code>pthread_mutexattr_init</code>. Когда атрибут больше не нужен, его можно освободить через <code>pthread_mutexattr_destroy</code>.</p>
+  <div class="codebox"><div class="codebar"><span>Правильная последовательность инициализации атрибутов</span><button data-copy="attr-snippet">Копировать код</button></div><pre id="attr-snippet"><code>pthread_mutex_t mutex;
+pthread_mutexattr_t attr;
+
+int rc = pthread_mutexattr_init(&amp;attr);
+if (rc != 0) { /* обработать rc */ }
+
+rc = pthread_mutexattr_settype(&amp;attr, PTHREAD_MUTEX_ERRORCHECK);
+if (rc != 0) { /* обработать rc */ }
+
+rc = pthread_mutex_init(&amp;mutex, &amp;attr);
+if (rc != 0) { /* обработать rc */ }
+
+pthread_mutexattr_destroy(&amp;attr); /* сам mutex остаётся инициализирован */
+/* ... работа с mutex ... */
+pthread_mutex_destroy(&amp;mutex);</code></pre></div>
+  <div class="callout"><strong>Обработка ошибок pthreads:</strong> многие функции pthreads возвращают код ошибки напрямую, а не через <code>errno</code>. В таком случае диагностируют <code>rc</code>, например через <code>strerror(rc)</code>; автоматический вызов <code>perror</code> после записи кода в переменную не является корректной общей схемой.</div>
+  <label class="completion"><input type="checkbox" class="complete-toggle"> Отметить раздел как изученный</label>
+</section>
+
+<section class="section" id="types" data-section>
+  <div class="section-head"><div class="section-num">2</div><div><h2>Три типа мьютексов</h2><p class="section-intro">Тип задаётся вторым аргументом <code>pthread_mutexattr_settype(&amp;attr, type)</code> до создания мьютекса.</p></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Тип</th><th>Повторный lock тем же потоком</th><th>Попытка unlock чужого мьютекса</th><th>Когда полезен</th></tr></thead><tbody>
+  <tr><td><code>PTHREAD_MUTEX_NORMAL</code></td><td>По конспекту — приводит к неопределённому поведению; стандартное описание обычно трактует повторный захват как самоблокировку (deadlock).</td><td>Неопределённое поведение.</td><td>Минимальная проверка ошибок; использовать только при корректном соблюдении протокола.</td></tr>
+  <tr><td><code>PTHREAD_MUTEX_ERRORCHECK</code></td><td>Возвращается код ошибки, вместо безусловного самозацикливания.</td><td>Возвращается ошибка, например <code>EPERM</code> для операции, которую нельзя выполнять текущему потоку.</td><td>Отладка и обнаружение неверного использования мьютекса.</td></tr>
+  <tr><td><code>PTHREAD_MUTEX_RECURSIVE</code></td><td>Повторный захват тем же владельцем допустим; ведётся счётчик захватов.</td><td>Чужой поток не может законно освободить мьютекс.</td><td>Редкие случаи, когда один поток повторно входит в код, защищённый одним и тем же мьютексом.</td></tr>
+  </tbody></table></div>
+  <h3>Как работает рекурсивный мьютекс?</h3>
+  <p>Если поток A дважды вызывает <code>lock</code> на рекурсивном мьютексе, ему нужно выполнить два соответствующих <code>unlock</code>, чтобы мьютекс стал доступен другим потокам. Один <code>unlock</code> уменьшает внутренний счётчик, но не обязательно освобождает мьютекс полностью.</p>
+  <div class="grid3">
+    <div class="mini-card"><span class="tag">NORMAL</span><h4>Без проверки ошибок</h4><p>Неправильный протокол синхронизации может превратиться в зависание или неопределённое поведение.</p></div>
+    <div class="mini-card"><span class="tag blue">ERRORCHECK</span><h4>Проверка ошибок</h4><p>Помогает обнаруживать повторный захват или попытку освобождения не владельцем.</p></div>
+    <div class="mini-card"><span class="tag green">RECURSIVE</span><h4>Повторный захват</h4><p>Допускает вложенный lock тем же потоком, но каждый захват обязан иметь парный unlock.</p></div>
+  </div>
+  <div class="callout danger"><strong>Не путай «не было сообщения об ошибке» с «код корректен».</strong> В листинге конспекта смена <code>ERRORCHECK</code> на <code>NORMAL</code> убирает сообщение, но не делает попытку освободить чужой мьютекс допустимой.</div>
+  <label class="completion"><input type="checkbox" class="complete-toggle"> Отметить раздел как изученный</label>
+</section>
+
+<section class="section" id="deadlock" data-section>
+  <div class="section-head"><div class="section-num">3</div><div><h2>Дэдлок (deadlock): почему потоки могут навсегда остановиться</h2><p class="section-intro">В таблице 1 конспекта два потока захватывают два мьютекса в противоположном порядке.</p></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Время</th><th>Поток 1</th><th>Поток 2</th></tr></thead><tbody><tr><td>0</td><td><code>lock(m1)</code> — получает m1</td><td><code>lock(m2)</code> — получает m2</td></tr><tr><td>1</td><td><code>lock(m2)</code> — ждёт поток 2</td><td><code>lock(m1)</code> — ждёт поток 1</td></tr></tbody></table></div>
+  <div class="grid2"><div class="mini-card"><h3>Что держит поток 1?</h3><p>Мьютекс <code>m1</code>. Для продолжения ему нужен <code>m2</code>, который удерживает поток 2.</p></div><div class="mini-card"><h3>Что держит поток 2?</h3><p>Мьютекс <code>m2</code>. Для продолжения ему нужен <code>m1</code>, который удерживает поток 1.</p></div></div>
+  <div class="callout danger"><strong>Замкнутое ожидание:</strong> поток 1 не отпустит m1, пока не получит m2; поток 2 не отпустит m2, пока не получит m1. Ни один поток не может продвинуться к <code>unlock</code>.</div>
+  <h3>Интерактивная модель</h3>
+  <p>Нажми кнопку, чтобы показать взаимную блокировку и затем применить правило единого порядка захвата.</p>
+  <div class="deadlock-controls"><button class="btn" id="showDeadlock">Показать дэдлок</button><button class="btn secondary" id="fixDeadlock">Показать исправление</button><button class="btn ghost" id="resetDeadlock">Сбросить</button></div>
+  <div class="owner-track" id="deadlockBoard"><div class="owner-state"><strong>m1</strong><span>свободен</span></div><div class="owner-state"><strong>m2</strong><span>свободен</span></div><div class="owner-state"><strong>Потоки</strong><span>выполняются</span></div></div>
+  <div class="result" id="deadlockResult" aria-live="polite">Симуляция ждёт запуска.</div>
+  <h3>Как избегать дэдлока</h3>
+  <ol><li><strong>Задать общий порядок захвата.</strong> Например, все потоки сначала берут m1, затем m2 — независимо от своей задачи.</li><li><strong>Сокращать время удержания.</strong> Не ждать ввода пользователя, сетевого ответа или другого длительного события, держа мьютекс без необходимости.</li><li><strong>Проектировать протокол освобождения.</strong> На каждом пути после успешного захвата должен существовать корректный путь к освобождению.</li></ol>
+  <div class="codebox"><div class="codebar"><span>Согласованный порядок</span><button data-copy="lock-order-code">Копировать код</button></div><pre id="lock-order-code"><code>/* Все потоки берут блокировки в одном и том же порядке. */
+pthread_mutex_lock(&amp;m1);
+pthread_mutex_lock(&amp;m2);
+
+/* работа, которой нужны обе блокировки */
+
+pthread_mutex_unlock(&amp;m2);
+pthread_mutex_unlock(&amp;m1);</code></pre></div>
+  <p class="small">Единый порядок устраняет именно цикл ожидания для этой пары блокировок; сложные программы всё равно требуют анализа других зависимостей и блокировок.</p>
+  <label class="completion"><input type="checkbox" class="complete-toggle"> Отметить раздел как изученный</label>
+</section>
+
+<section class="section" id="listing1" data-section>
+  <div class="section-head"><div class="section-num">4</div><div><h2>Разбор листинга 1: ERRORCHECK и ошибка unlock</h2><p class="section-intro">Пример на страницах 3–4 конспекта проверяет, что произойдёт, если один поток попытается освободить мьютекс, захваченный другим.</p></div></div>
+  <div class="flow"><span class="step">main: init ERRORCHECK</span><span class="arrow">→</span><span class="step">main: lock(m)</span><span class="arrow">→</span><span class="step">рабочий поток: unlock(m)</span><span class="arrow">→</span><span class="step">код ошибки</span></div>
+  <p>В этом примере главный поток захватывает <code>m</code>, а затем запускает рабочие потоки. Их функция вызывает <code>pthread_mutex_unlock(&amp;m)</code>, хотя мьютекс принадлежит main. Для типа <code>PTHREAD_MUTEX_ERRORCHECK</code> такая операция обнаруживается как ошибка. В Linux типичный код — <code>EPERM</code>, который соответствует сообщению вроде <em>Operation not permitted</em>.</p>
+  <div class="callout warn"><strong>Точная оговорка к исходному листингу:</strong> в нём вызывается <code>pthread_mutexattr_settype(&amp;attr, ...)</code> без предварительного <code>pthread_mutexattr_init(&amp;attr)</code>. Так делать нельзя: объект атрибутов сначала должен быть инициализирован. В учебном примере ниже эта последовательность исправлена.</div>
+  <div class="codebox"><div class="codebar"><span>Иллюстрация идеи с корректной инициализацией и диагностикой</span><button data-copy="errorcheck-code">Копировать код</button></div><pre id="errorcheck-code"><code>#define _XOPEN_SOURCE 700
+#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+static pthread_mutex_t m;
+
+static void *worker(void *unused) {
+    (void)unused;
+    int rc = pthread_mutex_unlock(&amp;m); /* этот поток не владелец */
+    if (rc != 0) {
+        fprintf(stderr, "worker unlock: %s (код %d)\n", strerror(rc), rc);
+    }
+    return NULL;
+}
+
+int main(void) {
+    pthread_mutexattr_t attr;
+    pthread_t thread;
+    int rc = pthread_mutexattr_init(&amp;attr);
+    if (rc != 0) return 1;
+
+    rc = pthread_mutexattr_settype(&amp;attr, PTHREAD_MUTEX_ERRORCHECK);
+    if (rc != 0) return 1;
+    rc = pthread_mutex_init(&amp;m, &amp;attr);
+    pthread_mutexattr_destroy(&amp;attr);
+    if (rc != 0) return 1;
+
+    pthread_mutex_lock(&amp;m); /* main становится владельцем */
+    rc = pthread_create(&amp;thread, NULL, worker, NULL);
+    if (rc == 0) pthread_join(thread, NULL);
+    pthread_mutex_unlock(&amp;m);
+    pthread_mutex_destroy(&amp;m);
+    return rc != 0;
+}</code></pre></div>
+  <p>Почему в диагностике используется <code>strerror(rc)</code>, а не <code>perror</code>? Функции pthreads, которые возвращают ошибки в виде ненулевого результата, обычно возвращают сам номер ошибки. Они не обязаны записывать этот номер в <code>errno</code>. <code>perror</code> печатает расшифровку текущего <code>errno</code>, а это может оказаться совсем другая ошибка.</p>
+  <div class="callout good"><strong>Вывод:</strong> <code>ERRORCHECK</code> полезен для поиска нарушений протокола синхронизации. Он не заменяет правильного владения, обработки кодов возврата и парных операций.</div>
+  <label class="completion"><input type="checkbox" class="complete-toggle"> Отметить раздел как изученный</label>
+</section>
+
+<section class="section" id="semaphore" data-section>
+  <div class="section-head"><div class="section-num">5</div><div><h2>Семафоры: счётчик разрешений</h2><p class="section-intro">В POSIX unnamed semaphore представлен типом <code>sem_t</code>. В конспекте он описан как беззнаковая целочисленная переменная; практически важно понимать его как синхронизационный объект со счётчиком.</p></div></div>
+  <h3>Инициализация и удаление</h3>
+  <div class="codebox"><div class="codebar"><span>Интерфейс из конспекта</span><button data-copy="sem-api-code">Копировать код</button></div><pre id="sem-api-code"><code>#include &lt;semaphore.h&gt;
+
+int sem_init(sem_t *sem, int pshared, unsigned int value);
+int sem_wait(sem_t *sem);
+int sem_post(sem_t *sem);
+int sem_destroy(sem_t *sem);</code></pre></div>
+  <div class="table-wrap"><table><thead><tr><th>Аргумент / функция</th><th>Значение</th></tr></thead><tbody><tr><td><code>sem_init(&amp;s, 0, initial)</code></td><td><code>pshared = 0</code>: семафор предназначен для потоков одного процесса. Это вариант в листинге 2 конспекта.</td></tr><tr><td><code>sem_init(&amp;s, 1, initial)</code></td><td>Ненулевой <code>pshared</code>: семафор разделяется между процессами и должен располагаться в памяти, доступной этим процессам (например, в общей памяти).</td></tr><tr><td><code>initial</code></td><td>Начальное количество разрешений. В кольцевом примере каждый семафор начинается с 0.</td></tr><tr><td><code>sem_wait(&amp;s)</code></td><td>Если счётчик больше 0 — уменьшает его на 1 и продолжает. Если счётчик равен 0 — блокирует поток до доступного разрешения.</td></tr><tr><td><code>sem_post(&amp;s)</code></td><td>Добавляет разрешение; если есть ожидающий поток, один из ожидающих может быть разблокирован.</td></tr><tr><td><code>sem_destroy(&amp;s)</code></td><td>Завершает жизненный цикл неименованного семафора; вызывать после окончания его использования.</td></tr></tbody></table></div>
+  <div class="callout"><strong>Почему <code>sem_init(..., 0, 0)</code> удобно для событий?</strong> Нулевой счётчик означает: «разрешения пока нет». Поток-получатель останавливается на <code>sem_wait</code> и продолжит, когда отправитель вызовет <code>sem_post</code>.</div>
+  <h3>Поиграй со счётчиком</h3>
+  <p>Это модель семафора. Она показывает счётчик разрешений и ожидающих потоков. Начни с нуля и нажми Wait — появится заблокированный поток. Затем нажми Post: разрешение передастся ожидающему, и поток продолжит работу.</p>
+  <div class="sim-controls"><label for="semInitial"><strong>Начальное значение:</strong></label><select id="semInitial"><option value="0" selected>0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select><button class="btn secondary" id="semReset">Сбросить модель</button></div>
+  <div class="sim-counter"><div class="counter-value" id="semCount">0</div><div class="counter-label"><strong>Доступные разрешения</strong><span>Ожидающих потоков: <b id="semWaiters">0</b></span><div class="small" id="semState">Семафор создан, ожидающих нет.</div></div></div>
+  <div class="sim-controls"><button class="btn" id="semWait">sem_wait()</button><button class="btn secondary" id="semPost">sem_post()</button><button class="btn ghost" id="semClearLog">Очистить журнал</button></div>
+  <div class="log" id="semLog" aria-live="polite"><div>Модель готова. При значении 0 вызов wait блокируется.</div></div>
+  <h3>Бинарный и считающий семафор</h3>
+  <p>Если ограничить счётчик уровнями 0 и 1, получается бинарный семафор — он может использоваться для простых задач взаимного исключения. Если счётчик допускает значения выше единицы, семафор удобно применять для ограничения числа одновременно используемых ресурсов, например пяти соединений или трёх устройств.</p>
+  <div class="callout warn"><strong>Отличие от мьютекса:</strong> у семафора нет понятия владельца. Один поток может выполнить <code>sem_post</code>, чтобы разрешить работу другому. У мьютекса корректное освобождение связано с потоком-владельцем.</div>
+  <label class="completion"><input type="checkbox" class="complete-toggle"> Отметить раздел как изученный</label>
+</section>
+
+<section class="section" id="ring" data-section>
+  <div class="section-head"><div class="section-num">6</div><div><h2>Кольцевая передача сообщений: «производитель — потребитель»</h2><p class="section-intro">В листинге 2 конспекта каждый поток отправляет сообщение следующему потоку по кругу, а затем ждёт сообщение для себя.</p></div></div>
+  <p>Для потока с номером <code>my_rank</code> вычисляются:</p>
+  <div class="grid2"><div class="mini-card"><h3>Получатель — dest</h3><p><code>dest = (my_rank + 1) % thread_count</code></p><p>Последний поток отправляет сообщение потоку 0 благодаря операции остатка от деления.</p></div><div class="mini-card"><h3>Предшественник — source</h3><p><code>source = (my_rank + thread_count - 1) % thread_count</code></p><p>Это поток, от которого текущий поток должен получить своё сообщение.</p></div></div>
+  <h3>Порядок действий одного потока</h3>
+  <ol><li>Создать строку сообщения, например <code>"Hello from 1 to 2"</code>.</li><li>Сохранить указатель на строку в <code>messages[dest]</code>.</li><li>Выполнить <code>sem_post(&amp;sems[dest])</code>: сообщить потоку-получателю, что данные готовы.</li><li>Выполнить <code>sem_wait(&amp;sems[my_rank])</code>: дождаться сообщения, адресованного текущему потоку.</li><li>Напечатать полученное сообщение.</li></ol>
+  <div class="callout good"><strong>Почему сначала записывают сообщение, а потом делают post?</strong> Получатель должен проснуться только после того, как данные подготовлены. Пара семафорных операций синхронизирует передачу: поток не просто угадывает момент, когда сообщение уже существует, а ожидает явного разрешения.</div>
+  <h3>Интерактивная симуляция кольца</h3>
+  <div class="sim-controls"><label for="ringN"><strong>Количество потоков:</strong></label><select id="ringN"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select><button class="btn" id="runRing">Передать сообщения по кольцу</button><button class="btn secondary" id="resetRing">Сбросить</button></div>
+  <div class="ring" id="ringBoard"><div class="ring-node"><b>Поток 0</b><small>ожидает сообщения</small></div><div class="ring-node"><b>Поток 1</b><small>ожидает сообщения</small></div><div class="ring-node"><b>Поток 2</b><small>ожидает сообщения</small></div><div class="ring-node"><b>Поток 3</b><small>ожидает сообщения</small></div></div>
+  <div class="log" id="ringLog" aria-live="polite"><div>Выбери число потоков и запусти симуляцию.</div></div>
+  <h3>Что именно происходит в коде из конспекта?</h3>
+  <div class="codebox"><div class="codebar"><span>Основная логика потока из листинга 2</span><button data-copy="ring-core">Копировать код</button></div><pre id="ring-core"><code>int dest = (my_rank + 1) % thread_count;
+int source = (my_rank + thread_count - 1) % thread_count;
+
+char *mes = malloc(MSG_SIZE * sizeof(char));
+sprintf(mes, "Hello from %ld to %d", my_rank, dest);
+messages[dest] = mes;
+sem_post(&amp;sems[dest]);
+sem_wait(&amp;sems[my_rank]);
+printf("Thread %ld -> %s\n", my_rank, messages[my_rank]);</code></pre></div>
+  <p>Обрати внимание: переменная <code>source</code> выводится формулой, но в исходном листинге явно не используется. Полученное сообщение извлекается через <code>messages[my_rank]</code>; источник уже определён тем, какой поток записал в этот слот. При запуске все семафоры имеют значение 0 — поток ждёт, пока его семафор не получит post.</p>
+  <div class="callout warn"><strong>Практические детали C:</strong> в оригинальном учебном коде показан принцип. В реальной программе нужно проверять результаты <code>malloc</code>, <code>pthread_create</code>, <code>sem_init</code>, <code>sem_post</code> и <code>sem_wait</code>, а также освобождать память. Не уничтожай семафор, пока какой-либо поток ещё может его использовать.</div>
+  <label class="completion"><input type="checkbox" class="complete-toggle"> Отметить раздел как изученный</label>
+</section>
+
+<section class="section" id="listing2" data-section>
+  <div class="section-head"><div class="section-num">7</div><div><h2>Полный рабочий пример на C: кольцо сообщений</h2><p class="section-intro">Вариант для компиляции, основанный на идее листинга 2: по одному сообщению каждому следующему потоку, затем печать принятого сообщения.</p></div></div>
+  <p>Чтобы исключить тонкость преобразования целого числа в указатель в аргументе потока, здесь каждому потоку передаётся адрес структуры с номером. Обмен сообщений и использование семафоров соответствуют алгоритму конспекта.</p>
+  <div class="codebox"><div class="codebar"><span>ring_messages.c</span><button data-copy="ring-full">Копировать полный пример</button></div><pre id="ring-full"><code>#include &lt;errno.h&gt;
+#include &lt;pthread.h&gt;
+#include &lt;semaphore.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+#define MSG_SIZE 100
+
+typedef struct { int rank; } thread_arg;
+
+static int thread_count;
+static sem_t *sems;
+static char **messages;
+
+static void *routine(void *arg) {
+    int rank = ((thread_arg *)arg)-&gt;rank;
+    int dest = (rank + 1) % thread_count;
+    char *msg = malloc(MSG_SIZE);
+    if (msg == NULL) {
+        fprintf(stderr, "malloc failed in thread %d\n", rank);
+        messages[dest] = NULL;
+    } else {
+        snprintf(msg, MSG_SIZE, "Hello from %d to %d", rank, dest);
+        messages[dest] = msg;
+    }
+
+    /* Даже при нехватке памяти сигнализируем получателю, чтобы он не ждал вечно. */
+    if (sem_post(&amp;sems[dest]) == -1) {
+        perror("sem_post");
+        abort();
+    }
+
+    while (sem_wait(&amp;sems[rank]) == -1) {
+        if (errno == EINTR) continue;
+        perror("sem_wait");
+        abort();
+    }
+
+    if (messages[rank] != NULL)
+        printf("Thread %d -> %s\n", rank, messages[rank]);
+    else
+        fprintf(stderr, "Thread %d received no message (sender allocation failure)\n", rank);
+    return NULL;
+}
+
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s THREAD_COUNT (>= 1)\n", argv[0]);
+        return 1;
+    }
+    char *end = NULL;
+    long n = strtol(argv[1], &amp;end, 10);
+    if (*argv[1] == '\0' || *end != '\0' || n &lt; 1 || n &gt; 1000) {
+        fprintf(stderr, "THREAD_COUNT must be from 1 to 1000\n");
+        return 1;
+    }
+    thread_count = (int)n;
+
+    pthread_t *threads = calloc((size_t)thread_count, sizeof(*threads));
+    thread_arg *args = calloc((size_t)thread_count, sizeof(*args));
+    sems = calloc((size_t)thread_count, sizeof(*sems));
+    messages = calloc((size_t)thread_count, sizeof(*messages));
+    if (!threads || !args || !sems || !messages) {
+        perror("calloc");
+        free(threads); free(args); free(sems); free(messages);
+        return 1;
+    }
+
+    int initialized = 0;
+    for (; initialized &lt; thread_count; ++initialized) {
+        if (sem_init(&amp;sems[initialized], 0, 0) == -1) {
+            perror("sem_init");
+            for (int j = 0; j &lt; initialized; ++j) sem_destroy(&amp;sems[j]);
+            free(threads); free(args); free(sems); free(messages);
+            return 1;
+        }
+    }
+
+    int created = 0;
+    for (int i = 0; i &lt; thread_count; ++i) {
+        args[i].rank = i;
+        int rc = pthread_create(&amp;threads[i], NULL, routine, &amp;args[i]);
+        if (rc != 0) {
+            fprintf(stderr, "pthread_create: %s\n", strerror(rc));
+            break;
+        }
+        ++created;
+    }
+
+    /* Если не все потоки созданы, подаём разрешения, чтобы уже созданные
+       потоки не остались бесконечно ждать отсутствующего участника кольца. */
+    if (created != thread_count) {
+        for (int i = 0; i &lt; thread_count; ++i) sem_post(&amp;sems[i]);
+    }
+    for (int i = 0; i &lt; created; ++i) {
+        int rc = pthread_join(threads[i], NULL);
+        if (rc != 0) fprintf(stderr, "pthread_join: %s\n", strerror(rc));
+    }
+
+    for (int i = 0; i &lt; thread_count; ++i) {
+        sem_destroy(&amp;sems[i]);
+        free(messages[i]);
+    }
+    free(messages); free(sems); free(args); free(threads);
+    return created == thread_count ? 0 : 1;
+}</code></pre></div>
+  <div class="callout warn"><strong>Важная учебная оговорка к обработке частичного запуска:</strong> блок с дополнительными <code>sem_post</code> нужен, чтобы потоки, созданные до ошибки <code>pthread_create</code>, не ждали несуществующего участника. Для промышленного кода error-path стоит проектировать и тестировать отдельно, особенно учитывая владение выделенной памятью и успешность каждой синхронизационной операции.</div>
+  <h3>Как скомпилировать и запустить в Linux / WSL</h3>
+  <div class="codebox"><div class="codebar"><span>Терминал</span><button data-copy="compile-ring">Копировать команды</button></div><pre id="compile-ring"><code>gcc -std=c11 -Wall -Wextra -Wpedantic -pthread ring_messages.c -o ring_messages
+./ring_messages 4</code></pre></div>
+  <p>В выводе порядок строк может различаться: планировщик ОС выбирает, в каком порядке запустятся потоки. Смысл результата — каждый поток печатает сообщение, которое адресовано ему его предшественником. Не требуется, чтобы строки выводились в порядке рангов.</p>
+  <label class="completion"><input type="checkbox" class="complete-toggle"> Отметить раздел как изученный</label>
+</section>
+
+<section class="section" id="compare" data-section>
+  <div class="section-head"><div class="section-num">8</div><div><h2>Мьютекс или семафор?</h2><p class="section-intro">Выбирай примитив по смыслу задачи — не только по тому, может ли он блокировать поток.</p></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Критерий</th><th>Мьютекс</th><th>Семафор</th></tr></thead><tbody>
+  <tr><td>Основная идея</td><td>Взаимное исключение: один владелец.</td><td>Счётчик доступных разрешений.</td></tr>
+  <tr><td>Состояние</td><td>Свободен / захвачен.</td><td>Ноль или положительное число разрешений.</td></tr>
+  <tr><td>Кто освобождает / сигналит</td><td>Владелец должен вызвать <code>pthread_mutex_unlock</code>.</td><td>Любой подходящий поток может вызвать <code>sem_post</code>; владения нет.</td></tr>
+  <tr><td>Типичная задача</td><td>Защитить общую структуру или переменную от одновременного изменения.</td><td>Передать событие, сообщить о готовности данных или ограничить число одновременных пользователей ресурса.</td></tr>
+  <tr><td>Инициализация</td><td><code>pthread_mutex_init</code> либо статический инициализатор.</td><td><code>sem_init</code> с начальным счётчиком и параметром <code>pshared</code>.</td></tr>
+  </tbody></table></div>
+  <h3>Мини-сценарии: выбери примитив</h3>
+  <div class="quiz" data-quiz><h4>А. Два потока увеличивают одну общую переменную. Нужно не потерять инкременты.</h4><div class="options"><button class="option" data-correct="true">Мьютекс вокруг изменения переменной</button><button class="option" data-correct="false">Семафор с начальным значением 100 без дополнительных условий</button><button class="option" data-correct="false">Никакая синхронизация не нужна, потому что каждый поток работает параллельно</button></div><div class="feedback"></div></div>
+  <div class="quiz" data-quiz><h4>Б. Поток B должен ждать, пока поток A закончит подготовку сообщения.</h4><div class="options"><button class="option" data-correct="false">Мьютекс нужно захватить потоком B и никогда не освобождать</button><button class="option" data-correct="true">Семафор, изначально равный 0: A делает post после подготовки, B ждёт через wait</button><button class="option" data-correct="false">Увеличить общий счётчик обычным `int` и надеяться на нужный порядок</button></div><div class="feedback"></div></div>
+  <div class="quiz" data-quiz><h4>В. Есть 4 одинаковых ресурса, и одновременно использовать их могут максимум 4 потока.</h4><div class="options"><button class="option" data-correct="true">Считающий семафор с начальным значением 4: wait при входе, post при выходе</button><button class="option" data-correct="false">Рекурсивный мьютекс</button><button class="option" data-correct="false">Семафор с начальным значением 0 и без вызова post</button></div><div class="feedback"></div></div>
+  <label class="completion"><input type="checkbox" class="complete-toggle"> Отметить раздел как изученный</label>
+</section>
+
+<section class="section" id="exercises" data-section>
+  <div class="section-head"><div class="section-num">9</div><div><h2>Практикум: задачи на написание C-кода</h2><p class="section-intro">Сначала попробуй решить самостоятельно. Подсказка направляет ход мысли; решение открывай после попытки. Код можно копировать в редактор.</p></div></div>
+  <div class="task"><div class="task-title"><span class="n">1</span><div><h3>Защити общий счётчик</h3><p>Напиши программу с двумя потоками. Каждый увеличивает глобальный <code>long counter</code> 100&nbsp;000 раз. Итог должен быть 200&nbsp;000.</p></div></div><div class="checklist"><label class="checkline"><input type="checkbox"> Создал <code>pthread_mutex_t</code> и инициализировал его.</label><label class="checkline"><input type="checkbox"> Обернул <code>counter++</code> между <code>lock</code> и <code>unlock</code>.</label><label class="checkline"><input type="checkbox"> Сделал <code>pthread_join</code> для обоих потоков до чтения итога.</label><label class="checkline"><input type="checkbox"> Уничтожил мьютекс после завершения потоков.</label></div><details><summary>Подсказка и решение</summary><p>Защищать нужно и сам инкремент, потому что он не является одной неделимой операцией на уровне языка C.</p><div class="codebox"><div class="codebar"><span>Фрагмент рабочей функции</span><button data-copy="task1-answer">Копировать</button></div><pre id="task1-answer"><code>static pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
+static long counter = 0;
+
+void *worker(void *arg) {
+    (void)arg;
+    for (int i = 0; i &lt; 100000; ++i) {
+        pthread_mutex_lock(&amp;m);
+        ++counter;
+        pthread_mutex_unlock(&amp;m);
+    }
+    return NULL;
+}</code></pre></div><p class="small">Допиши в <code>main</code> создание двух потоков, два <code>pthread_join</code>, печать результата и затем <code>pthread_mutex_destroy</code>. Для учебного задания также обработай ошибки API.</p></details></div>
+  <div class="task"><div class="task-title"><span class="n">2</span><div><h3>Найди ошибку протокола с мьютексом</h3><p>Главный поток захватил <code>m</code>. Рабочий поток вызывает <code>pthread_mutex_unlock(&amp;m)</code>. Объясни разницу поведения для NORMAL и ERRORCHECK.</p></div></div><details><summary>Подсказка и решение</summary><p>Нельзя освобождать обычный мьютекс из потока, который им не владеет. <code>ERRORCHECK</code> возвращает код ошибки; <code>NORMAL</code> не превращает ошибочную операцию в корректную — поведение неопределено. Инициализация атрибутов должна идти через <code>pthread_mutexattr_init</code> до <code>pthread_mutexattr_settype</code>.</p></details></div>
+  <div class="task"><div class="task-title"><span class="n">3</span><div><h3>Устрани дэдлок в двух ресурсах</h3><p>Поток A берёт <code>m1</code>, затем <code>m2</code>; поток B берёт <code>m2</code>, затем <code>m1</code>. Перепиши порядок и укажи порядок освобождения.</p></div></div><details><summary>Подсказка и решение</summary><p>Договоритесь, что все потоки захватывают блокировки в одном порядке: сначала <code>m1</code>, затем <code>m2</code>. Для естественного стека освобождения отпускайте наоборот: сначала <code>m2</code>, затем <code>m1</code>. Важно, чтобы все участки программы соблюдали общий порядок.</p></details></div>
+  <div class="task"><div class="task-title"><span class="n">4</span><div><h3>Передай событие с помощью семафора</h3><p>Есть два потока. Получатель должен напечатать «данные готовы» только после того, как производитель записал данные. Инициализируй семафор правильно и расставь <code>wait</code>/<code>post</code>.</p></div></div><details><summary>Подсказка и решение</summary><div class="codebox"><div class="codebar"><span>Схема синхронизации</span><button data-copy="task4-answer">Копировать</button></div><pre id="task4-answer"><code>/* main: */
+sem_t ready;
+sem_init(&amp;ready, 0, 0);  /* первоначально разрешения нет */
+
+/* producer thread: */
+prepare_data();
+sem_post(&amp;ready);       /* событие: данные готовы */
+
+/* consumer thread: */
+sem_wait(&amp;ready);       /* ждёт разрешения */
+use_data();</code></pre></div><p>Перед использованием общие данные должны быть организованы так, чтобы производитель и потребитель обращались к одному объекту. Не уничтожай семафор, пока потоки ещё работают.</p></details></div>
+  <div class="task"><div class="task-title"><span class="n">5</span><div><h3>Измени кольцо на 5 потоков</h3><p>В коде листинга оставь формулы <code>dest</code> и <code>source</code>. Проследи, кто отправляет сообщение потоку 0 и от кого оно приходит.</p></div></div><details><summary>Подсказка и решение</summary><p>Для ранга 4 при <code>thread_count = 5</code>: <code>dest = (4 + 1) % 5 = 0</code>. Для ранга 0: <code>source = (0 + 5 - 1) % 5 = 4</code>. Поэтому поток 4 отправляет сообщение потоку 0, а поток 0 получает сообщение от потока 4.</p></details></div>
+  <div class="task"><div class="task-title"><span class="n">6</span><div><h3>Ограничь доступ к трём ресурсам</h3><p>Напиши псевдокод потока, который перед использованием одного из трёх ресурсов уменьшает счётчик семафора, а после освобождения увеличивает его. Что произойдёт с четвёртым потоком?</p></div></div><details><summary>Подсказка и решение</summary><div class="codebox"><div class="codebar"><span>Псевдокод</span><button data-copy="task6-answer">Копировать</button></div><pre id="task6-answer"><code>sem_wait(&amp;slots);   /* slots инициализирован значением 3 */
+use_limited_resource();
+sem_post(&amp;slots);   /* ресурс освобождён */</code></pre></div><p>Первые три потока могут получить разрешения. Дополнительный поток заблокируется в <code>sem_wait</code>, если все три разрешения уже использованы, и продолжит после <code>sem_post</code> одним из потоков.</p></details></div>
+  <h3>Рабочее поле для своего решения</h3>
+  <p class="small">Поле локальное для этой страницы: здесь можно набросать код и сверить его по чек-листу ниже. Для настоящей проверки компиляции скопируй код в файл <code>.c</code> и запусти GCC.</p>
+  <div class="practice"><textarea id="scratchpad" spellcheck="false" aria-label="Поле для кода на C">#include &lt;pthread.h&gt;
+#include &lt;semaphore.h&gt;
+#include &lt;stdio.h&gt;
+
+int main(void) {
+    /* Твоё решение начинается здесь */
+    return 0;
+}</textarea><div class="sim-controls"><button class="btn secondary" id="saveScratch">Сохранить черновик в браузере</button><button class="btn ghost" id="loadScratch">Загрузить сохранённый черновик</button><button class="btn ghost" id="clearScratch">Очистить поле</button></div><div class="small" id="scratchStatus" aria-live="polite">Черновик ещё не сохранён.</div></div>
+  <label class="completion"><input type="checkbox" class="complete-toggle"> Отметить раздел как изученный</label>
+</section>
+
+<section class="section" id="quiz" data-section>
+  <div class="section-head"><div class="section-num">10</div><div><h2>Контрольные вопросы</h2><p class="section-intro">Проверь, умеешь ли ты объяснить поведение примитивов не по названию, а по протоколу синхронизации.</p></div></div>
+  <div class="small" style="margin-bottom:10px">Правильных ответов: <strong id="quizScore">0</strong> из <strong id="quizTotal">7</strong></div>
+  <div class="quiz" data-quiz><h4>1. Поток A держит мьютекс, поток B вызывает lock на том же мьютексе. Что обычно происходит?</h4><div class="options"><button class="option" data-correct="false">B захватывает мьютекс одновременно с A</button><button class="option" data-correct="true">B ждёт, пока A освободит мьютекс</button><button class="option" data-correct="false">ОС автоматически вызывает unlock у A</button></div><div class="feedback"></div></div>
+  <div class="quiz" data-quiz><h4>2. Что делает <code>pthread_mutex_unlock</code> в корректном протоколе?</h4><div class="options"><button class="option" data-correct="true">Освобождает захваченный мьютекс, чтобы им мог владеть другой поток</button><button class="option" data-correct="false">Уничтожает объект мьютекса</button><button class="option" data-correct="false">Увеличивает счётчик разрешений</button></div><div class="feedback"></div></div>
+  <div class="quiz" data-quiz><h4>3. У каких мьютексов повторный lock тем же потоком допустим по назначению?</h4><div class="options"><button class="option" data-correct="false">Только NORMAL</button><button class="option" data-correct="true">RECURSIVE</button><button class="option" data-correct="false">Ни у каких</button></div><div class="feedback"></div></div>
+  <div class="quiz" data-quiz><h4>4. Оба потока держат разные мьютексы и ждут мьютекс друг друга. Это…</h4><div class="options"><button class="option" data-correct="true">Дэдлок — взаимная блокировка</button><button class="option" data-correct="false">Семафор со значением 0</button><button class="option" data-correct="false">Обычная очередь сообщений</button></div><div class="feedback"></div></div>
+  <div class="quiz" data-quiz><h4>5. Что произойдёт при sem_wait, когда счётчик равен 0?</h4><div class="options"><button class="option" data-correct="false">Счётчик станет −1</button><button class="option" data-correct="true">Поток будет ждать доступное разрешение</button><button class="option" data-correct="false">Семафор автоматически уничтожится</button></div><div class="feedback"></div></div>
+  <div class="quiz" data-quiz><h4>6. Какое начальное значение семафора подходит для «жди, пока данные не будут готовы»?</h4><div class="options"><button class="option" data-correct="false">100</button><button class="option" data-correct="false">1, чтобы потребитель сразу прошёл</button><button class="option" data-correct="true">0: производитель сделает post после подготовки данных</button></div><div class="feedback"></div></div>
+  <div class="quiz" data-quiz><h4>7. В чём принципиальная разница между мьютексом и семафором?</h4><div class="options"><button class="option" data-correct="true">У мьютекса есть владелец, а семафор — счётчик разрешений без владения</button><button class="option" data-correct="false">Семафор нельзя использовать для блокировки</button><button class="option" data-correct="false">У мьютекса обязательно должен быть счётчик больше 1</button></div><div class="feedback"></div></div>
+  <div class="sim-controls"><button class="btn secondary" id="resetQuiz">Сбросить ответы</button></div>
+  <label class="completion"><input type="checkbox" class="complete-toggle"> Отметить раздел как изученный</label>
+</section>
+
+<section class="section" id="cheatsheet" data-section>
+  <div class="section-head"><div class="section-num">11</div><div><h2>Шпаргалка и дальнейшее чтение</h2><p class="section-intro">Кратко собери основные вызовы и проверь, что готов объяснить каждый своими словами.</p></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Задача</th><th>Вызов</th><th>Что помнить</th></tr></thead><tbody>
+  <tr><td>Инициализировать мьютекс</td><td><code>pthread_mutex_init</code></td><td>Атрибуты должны быть инициализированы до использования.</td></tr><tr><td>Задать тип</td><td><code>pthread_mutexattr_settype</code></td><td>NORMAL, ERRORCHECK, RECURSIVE.</td></tr><tr><td>Захват / освобождение</td><td><code>pthread_mutex_lock</code> / <code>pthread_mutex_unlock</code></td><td>Соблюдай владение и парность операций.</td></tr><tr><td>Уничтожить мьютекс</td><td><code>pthread_mutex_destroy</code></td><td>Не уничтожай объект, которым ещё пользуются.</td></tr><tr><td>Инициализировать семафор</td><td><code>sem_init(&amp;s, pshared, value)</code></td><td>0 — потоки одного процесса; ненулевое значение — процессы при наличии общей памяти.</td></tr><tr><td>Взять разрешение / сигналить</td><td><code>sem_wait</code> / <code>sem_post</code></td><td>wait может блокировать при нулевом счётчике; post добавляет разрешение.</td></tr><tr><td>Уничтожить семафор</td><td><code>sem_destroy</code></td><td>Только после завершения использования всеми потоками.</td></tr>
+  </tbody></table></div>
+  <h3>Ссылки на документацию</h3>
+  <div class="resource"><div class="bullet">1</div><div><strong><a href="https://man7.org/linux/man-pages/man3/pthread_mutex_lock.3.html" target="_blank" rel="noopener">Linux man-pages: pthread_mutex_lock и связанные операции</a></strong><p>Описание захвата, освобождения, инициализации и уничтожения мьютексов.</p></div></div>
+  <div class="resource"><div class="bullet">2</div><div><strong><a href="https://man7.org/linux/man-pages/man3/pthread_mutexattr_settype.3p.html" target="_blank" rel="noopener">POSIX manual: типы мьютексов</a></strong><p>Точное поведение NORMAL, ERRORCHECK и RECURSIVE.</p></div></div>
+  <div class="resource"><div class="bullet">3</div><div><strong><a href="https://man7.org/linux/man-pages/man3/sem_init.3p.html" target="_blank" rel="noopener">POSIX manual: sem_init</a></strong><p>Начальное значение, смысл <code>pshared</code> и условия разделения между процессами.</p></div></div>
+  <div class="resource"><div class="bullet">4</div><div><strong><a href="https://man7.org/linux/man-pages/man3/sem_post.3.html" target="_blank" rel="noopener">Linux man-pages: sem_post</a> и <a href="https://man7.org/linux/man-pages/man3/sem_wait.3.html" target="_blank" rel="noopener">sem_wait</a></strong><p>Добавление разрешения, блокировка и обработка ошибок семафорных операций.</p></div></div>
+  <div class="resource"><div class="bullet">5</div><div><strong><a href="https://pubs.opengroup.org/onlinepubs/9699919799/functions/pthread_mutexattr_settype.html" target="_blank" rel="noopener">The Open Group: pthread_mutexattr_settype</a></strong><p>Нормативное описание POSIX для атрибутов типа мьютекса.</p></div></div>
+  <div class="callout good"><strong>Критерий освоения:</strong> ты можешь (1) объяснить, кто владеет мьютексом, (2) нарисовать дедлок из двух блокировок, (3) предсказать поведение wait/post для заданного счётчика, (4) восстановить кольцевые формулы dest/source и (5) написать и скомпилировать программу, которая использует мьютекс или семафор без нарушения протокола.</div>
+  <label class="completion"><input type="checkbox" class="complete-toggle"> Отметить раздел как изученный</label>
+</section>
+</main>
+</div>
+<footer class="footer">Учебник создан по материалу файла <strong>seminar_2.pdf</strong>. Интерактивные модели предназначены для обучения и показывают логику синхронизации, а не расписание реальных потоков ОС.</footer>
+<script>
+(function(){
+  const $=(s,root=document)=>root.querySelector(s), $$=(s,root=document)=>Array.from(root.querySelectorAll(s));
+  // Копирование фрагментов кода
+  $$('[data-copy]').forEach(btn=>btn.addEventListener('click',async()=>{
+    const el=document.getElementById(btn.dataset.copy); if(!el)return;
+    const text=el.innerText;
+    try{await navigator.clipboard.writeText(text);btn.textContent='Скопировано';}
+    catch(e){const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');btn.textContent='Скопировано';}catch(_){btn.textContent='Выдели код вручную';}ta.remove();}
+    setTimeout(()=>btn.textContent='Копировать'+(btn.dataset.copy==='ring-full'?' полный пример':''),1500);
+  }));
+  // Прогресс разделов, при возможности сохраняется локально
+  const boxes=$$('.complete-toggle');
+  const refreshProgress=()=>{const n=boxes.filter(b=>b.checked).length;$('#progressBar').style.width=(boxes.length?n/boxes.length*100:0)+'%';$('#progressText').textContent=`${n} из ${boxes.length} разделов отмечено`;try{localStorage.setItem('seminar2-progress',JSON.stringify(boxes.map(b=>b.checked)));}catch(e){}};
+  try{const saved=JSON.parse(localStorage.getItem('seminar2-progress')||'[]');boxes.forEach((b,i)=>b.checked=!!saved[i]);}catch(e){}
+  boxes.forEach(b=>b.addEventListener('change',refreshProgress));refreshProgress();
+  const sidebar=$('#sidebar');$('#toggleToc').addEventListener('click',()=>sidebar.classList.toggle('show'));
+  // Дэдлок — пояснительная пошаговая схема
+  $('#showDeadlock').addEventListener('click',()=>{const b=$('#deadlockBoard');b.innerHTML='<div class="owner-state active"><strong>m1</strong><span>захвачен потоком 1</span></div><div class="owner-state active"><strong>m2</strong><span>захвачен потоком 2</span></div><div class="owner-state active"><strong>Ожидание</strong><span>1 ждёт m2; 2 ждёт m1</span></div>';const r=$('#deadlockResult');r.className='result error';r.textContent='Дэдлок: поток 1 не может продолжить без m2, а поток 2 — без m1. Ни один не дойдёт до unlock.';});
+  $('#fixDeadlock').addEventListener('click',()=>{const b=$('#deadlockBoard');b.innerHTML='<div class="owner-state active"><strong>Шаг 1: m1</strong><span>Оба потока пытаются взять первым m1</span></div><div class="owner-state"><strong>Шаг 2: m2</strong><span>Следующая блокировка — только после m1</span></div><div class="owner-state"><strong>Итог</strong><span>Один поток ждёт у m1, цикл не замыкается</span></div>';const r=$('#deadlockResult');r.className='result success';r.textContent='Исправление: одинаковый порядок захвата. Если поток 1 уже держит m1, поток 2 не успевает взять m2 и не создаёт встречное ожидание.';});
+  $('#resetDeadlock').addEventListener('click',()=>{ $('#deadlockBoard').innerHTML='<div class="owner-state"><strong>m1</strong><span>свободен</span></div><div class="owner-state"><strong>m2</strong><span>свободен</span></div><div class="owner-state"><strong>Потоки</strong><span>выполняются</span></div>';const r=$('#deadlockResult');r.className='result';r.textContent='Симуляция ждёт запуска.';});
+  // Семофор: счётчик плюс виртуальные ожидающие
+  let semCount=0, waiters=0;const semLogs=[];
+  function renderSem(){ $('#semCount').textContent=semCount;$('#semWaiters').textContent=waiters;$('#semState').textContent=waiters?`Есть ${waiters} заблок. ожид.`:semCount?`Есть ${semCount} доступных разрешений.`:'Разрешений нет, ожидающих нет.';$('#semLog').innerHTML=semLogs.slice(-12).map(x=>'<div>'+x.replaceAll('&','&amp;').replaceAll('<','&lt;')+'</div>').join('');$('#semLog').scrollTop=$('#semLog').scrollHeight;}
+  function addSemLog(t){semLogs.push(t);renderSem();}
+  function resetSem(){semCount=Number($('#semInitial').value);waiters=0;semLogs.length=0;addSemLog(`Инициализация sem_init(..., 0, ${semCount}).`);}
+  $('#semInitial').addEventListener('change',resetSem);$('#semReset').addEventListener('click',resetSem);
+  $('#semWait').addEventListener('click',()=>{if(semCount>0){semCount--;addSemLog(`sem_wait: забрали одно разрешение; счётчик теперь ${semCount}.`);}else{waiters++;addSemLog(`sem_wait: разрешений нет — поток заблокирован (ожидающих ${waiters}).`);}});
+  $('#semPost').addEventListener('click',()=>{if(waiters>0){waiters--;addSemLog(`sem_post: разблокирован один ожидающий поток; разрешение сразу получено им, счётчик остаётся ${semCount}.`);}else{semCount++;addSemLog(`sem_post: добавлено разрешение; счётчик теперь ${semCount}.`);}});
+  $('#semClearLog').addEventListener('click',()=>{semLogs.length=0;addSemLog('Журнал очищен.');});resetSem();
+  // Модель кольца: все отправляют сообщение следующему, затем получают сообщение от предыдущего
+  function resetRing(){const n=Number($('#ringN').value);$('#ringBoard').style.gridTemplateColumns=`repeat(${n<=4?n:4}, minmax(0,1fr))`;$('#ringBoard').innerHTML=Array.from({length:n},(_,i)=>`<div class="ring-node"><b>Поток ${i}</b><small>ожидает сообщения</small></div>`).join('');$('#ringLog').innerHTML='<div>Выбери число потоков и запусти симуляцию.</div>';}
+  $('#ringN').addEventListener('change',resetRing);$('#resetRing').addEventListener('click',resetRing);
+  $('#runRing').addEventListener('click',()=>{const n=Number($('#ringN').value);const msgs=Array(n);const logs=[];for(let i=0;i<n;i++){const dest=(i+1)%n;msgs[dest]=`Hello from ${i} to ${dest}`;logs.push(`Поток ${i}: messages[${dest}] = "${msgs[dest]}"; sem_post(sems[${dest}]).`);}for(let i=0;i<n;i++){const source=(i+n-1)%n;logs.push(`Поток ${i}: sem_wait(sems[${i}]) завершён; Thread ${i} -> ${msgs[i]} (источник ${source}).`);}$('#ringBoard').style.gridTemplateColumns=`repeat(${n<=4?n:4}, minmax(0,1fr))`;$('#ringBoard').innerHTML=Array.from({length:n},(_,i)=>`<div class="ring-node"><b>Поток ${i}</b><small>получил: ${msgs[i]}</small></div>`).join('');$('#ringLog').innerHTML=logs.map(s=>`<div>${s.replaceAll('&','&amp;').replaceAll('<','&lt;')}</div>`).join('');});resetRing();
+  // Квизы с объяснениями и счётом без многократного начисления
+  const quizzes=$$('[data-quiz]');$('#quizTotal').textContent=quizzes.length;let quizScore=new Set();
+  quizzes.forEach((q,qi)=>{const opts=$$('.option',q),fb=$('.feedback',q);opts.forEach((b)=>b.addEventListener('click',()=>{opts.forEach(o=>{o.classList.remove('correct','incorrect');o.disabled=true;});const correct=b.dataset.correct==='true';b.classList.add(correct?'correct':'incorrect');const answer=opts.find(o=>o.dataset.correct==='true');if(correct){quizScore.add(qi);fb.textContent='Верно. '+answer.textContent.trim()+'.';fb.style.color='var(--green)';}else{quizScore.delete(qi);answer.classList.add('correct');fb.textContent='Не совсем. Правильный ответ: '+answer.textContent.trim()+'.';fb.style.color='var(--red)';}$('#quizScore').textContent=quizScore.size;}));});
+  $('#resetQuiz').addEventListener('click',()=>{quizScore.clear();$('#quizScore').textContent='0';quizzes.forEach(q=>{$$('.option',q).forEach(o=>{o.disabled=false;o.classList.remove('correct','incorrect');});$('.feedback',q).textContent='';});});
+  // Черновик учебных задач — storage может быть запрещён в некоторых file:// режимах
+  const scratch=$('#scratchpad'),status=$('#scratchStatus');$('#saveScratch').addEventListener('click',()=>{try{localStorage.setItem('seminar2-scratch',scratch.value);status.textContent='Черновик сохранён в локальном хранилище этого браузера.';}catch(e){status.textContent='Браузер запретил локальное сохранение. Скопируй код в файл вручную.';}});$('#loadScratch').addEventListener('click',()=>{try{const s=localStorage.getItem('seminar2-scratch');if(s===null){status.textContent='Сохранённый черновик не найден.';}else{scratch.value=s;status.textContent='Черновик загружен.';}}catch(e){status.textContent='Браузер не разрешил прочитать локальное сохранение.';}});$('#clearScratch').addEventListener('click',()=>{scratch.value='';status.textContent='Поле очищено.';});
+})();
+</script>
+</body>
+</html>
