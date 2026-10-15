@@ -1,0 +1,623 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>MPI Point-to-Point Handbook</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a study handbook — sticky contents rail on wide screens, one calm reading column (~68ch), code and diagrams as the only "objects". */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --code-bg:#eef1f6; --fg:#1d2330; --muted:#5a6375; --line:#d8dde6;
+  --accent:#2148b8; --accent-soft:#e3e9fa;
+  --warn:#9a5b00; --warn-soft:#fdf1dc; --err:#b42335; --err-soft:#fbe6e9; --ok:#1d7a4c; --ok-soft:#e1f3e9;
+  --beyond:#6b3fa0; --beyond-soft:#efe8f8;
+  --c-comment:#6b7385; --c-kw:#2148b8; --c-str:#1d7a4c; --c-fn:#9a3412;
+  --f-display:"Literata", Georgia, "Times New Roman", serif;
+  --f-body:"Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#14171d; --surface:#1b1f27; --code-bg:#20252f; --fg:#e3e6ec; --muted:#9aa3b4; --line:#2f3542;
+  --accent:#8eabff; --accent-soft:#232c45;
+  --warn:#f0b45a; --warn-soft:#33281a; --err:#ff8a98; --err-soft:#3a2026; --ok:#6fd3a0; --ok-soft:#1a3328;
+  --beyond:#c4a4f0; --beyond-soft:#2c2338;
+  --c-comment:#8a93a6; --c-kw:#8eabff; --c-str:#6fd3a0; --c-fn:#f4a37a;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#14171d; --surface:#1b1f27; --code-bg:#20252f; --fg:#e3e6ec; --muted:#9aa3b4; --line:#2f3542;
+  --accent:#8eabff; --accent-soft:#232c45;
+  --warn:#f0b45a; --warn-soft:#33281a; --err:#ff8a98; --err-soft:#3a2026; --ok:#6fd3a0; --ok-soft:#1a3328;
+  --beyond:#c4a4f0; --beyond-soft:#2c2338;
+  --c-comment:#8a93a6; --c-kw:#8eabff; --c-str:#6fd3a0; --c-fn:#f4a37a;
+  color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:17.5px;line-height:1.65;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:56px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}.toc{display:none}}
+main{min-width:0;max-width:72ch}
+
+/* contents rail */
+.toc{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-top:48px;max-height:100vh;overflow:auto;font-size:14.5px}
+.toc p{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px;font-weight:600}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;counter-reset:t}
+.toc a{display:block;padding:5px 10px;border-radius:6px;color:var(--muted);text-decoration:none;border-left:2px solid transparent}
+.toc a:hover,.toc a:focus-visible{color:var(--fg);background:var(--accent-soft)}
+.toc a.on{color:var(--accent);border-left-color:var(--accent);font-weight:600}
+
+/* type */
+header.hero{padding-block:48px 8px}
+.eyebrow{font-size:13px;text-transform:uppercase;letter-spacing:.09em;color:var(--accent);font-weight:700;margin:0}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(2rem,4.5vw,2.8rem);line-height:1.15;margin:.3em 0 .4em;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:700;font-size:1.65rem;line-height:1.25;margin:0 0 .6em;text-wrap:balance}
+h2 .num{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:.35em}
+h3{font-size:1.13rem;font-weight:700;margin:1.8em 0 .5em}
+.lede{font-size:1.15rem;color:var(--muted);margin:0}
+.ru{color:var(--muted);font-style:italic;font-weight:400}
+section{padding-block:44px 8px;border-top:1px solid var(--line);margin-top:40px;scroll-margin-top:16px}
+p{margin:0 0 1em}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .35em;border-radius:4px;overflow-wrap:anywhere}
+strong{font-weight:700}
+ul,ol{padding-left:1.3em;margin:0 0 1em}
+li{margin:.25em 0}
+
+/* code blocks */
+.code{position:relative;margin:1em 0 1.4em}
+pre{margin:0;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;font-family:var(--f-mono);font-size:14px;line-height:1.6;tab-size:4}
+pre code{background:none;padding:0;font-size:inherit;overflow-wrap:normal}
+.code .label{display:inline-block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:6px}
+.copy{position:absolute;top:30px;right:8px;font:600 12px var(--f-body);color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+.cm{color:var(--c-comment);font-style:italic}.kw{color:var(--c-kw);font-weight:600}.st{color:var(--c-str)}.fn{color:var(--c-fn)}
+.hl{background:var(--err-soft);display:inline-block;width:100%}
+
+/* callouts */
+.note{border-radius:10px;padding:14px 18px;margin:1.2em 0;border:1px solid var(--line);background:var(--surface)}
+.note > :last-child{margin-bottom:0}
+.note .tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-bottom:6px}
+.note.key{background:var(--accent-soft);border-color:transparent}.note.key .tag{background:var(--accent);color:var(--surface)}
+.note.warn{background:var(--warn-soft);border-color:transparent}.note.warn .tag{background:var(--warn);color:var(--surface)}
+.note.fix{background:var(--err-soft);border-color:transparent}.note.fix .tag{background:var(--err);color:var(--surface)}
+.note.beyond{background:var(--beyond-soft);border-color:transparent}.note.beyond .tag{background:var(--beyond);color:var(--surface)}
+.chip{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:1px 8px;border-radius:999px;vertical-align:2px;margin-left:6px}
+.chip.beyond{background:var(--beyond-soft);color:var(--beyond)}
+
+/* errata list */
+.errata{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+.errata li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:0}
+.errata .was{color:var(--err);font-weight:600}.errata .is{color:var(--ok);font-weight:600}
+.errata .where{font-size:13px;color:var(--muted);display:block;margin-bottom:2px}
+
+/* tables */
+.tbl{overflow-x:auto;margin:1em 0 1.4em;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+th{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;background:var(--code-bg)}
+td.n{font-variant-numeric:tabular-nums;color:var(--muted);width:2.5em}
+td code{white-space:nowrap}
+
+/* diagrams */
+figure{margin:1.4em 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto}
+figure svg{display:block;width:100%;height:auto;min-width:520px}
+figcaption{font-size:14px;color:var(--muted);margin-top:8px}
+svg text{font-family:var(--f-body);fill:var(--fg)}
+svg .mut{fill:var(--muted)} svg .acc{fill:var(--accent)} svg .err{fill:var(--err)} svg .okt{fill:var(--ok)}
+svg .box{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg .mem{fill:var(--code-bg);stroke:var(--line);stroke-width:1.5}
+svg .net{fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:5 5}
+svg .lane{stroke:var(--line);stroke-width:2}
+svg .arrow{stroke:var(--accent);stroke-width:2;fill:none}
+svg .arrow-err{stroke:var(--err);stroke-width:2;fill:none;stroke-dasharray:6 4}
+svg .blk{fill:var(--err-soft);stroke:var(--err);stroke-width:1.5}
+svg .okbox{fill:var(--ok-soft);stroke:var(--ok);stroke-width:1.5}
+
+/* checklist */
+.checks{list-style:none;padding:0;display:grid;gap:8px}
+.checks li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start;margin:0}
+.checks .b{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;font-weight:700;font-size:13px}
+.checks .b.must{background:var(--accent);color:var(--surface)}
+.checks .b.ok{background:var(--ok);color:var(--surface)}
+
+/* quiz */
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 16px;margin:0 0 10px}
+summary{cursor:pointer;padding:12px 0;font-weight:600;list-style:none;display:flex;gap:10px}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+";color:var(--accent);font-weight:700;width:1em;flex:none}
+details[open] summary::before{content:"−"}
+details > div{padding:0 0 14px 1.6em;color:var(--fg)}
+
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.cheat > div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.cheat h4{margin:0 0 6px;font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
+.cheat p,.cheat ul{font-size:15px;margin:0}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <p>Contents</p>
+  <ol>
+    <li><a href="#errata">Corrections to the notes</a></li>
+    <li><a href="#model">1 · The memory model</a></li>
+    <li><a href="#setup">2 · Install, compile, run</a></li>
+    <li><a href="#skeleton">3 · Anatomy of a program</a></li>
+    <li><a href="#send">4 · MPI_Send</a></li>
+    <li><a href="#recv">5 · MPI_Recv</a></li>
+    <li><a href="#wild">6 · Wildcards &amp; status</a></li>
+    <li><a href="#inside">7 · What Send really does</a></li>
+    <li><a href="#match">8 · Matching &amp; ordering</a></li>
+    <li><a href="#deadlock">9 · Deadlock</a></li>
+    <li><a href="#sendrecv">10 · Sendrecv</a></li>
+    <li><a href="#cheat">Cheat sheet</a></li>
+    <li><a href="#quiz">Self-check</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <p class="eyebrow">Lecture 4 · 29 September 2026</p>
+  <h1>Point-to-point communication in MPI</h1>
+  <p class="lede">One process sends, one process receives. This handbook covers everything in the lecture notes, corrects the mistakes in them, and marks clearly where it adds material from outside the lecture.</p>
+  <div class="note key" style="margin-top:20px">
+    <span class="tag">How to read this</span>
+    <p>Russian terms from the lecture appear in <span class="ru">italics</span>, so you can match this page to your notes. Blocks marked <span class="chip beyond">Beyond the lecture</span> are extra context checked against the MPI standard or official documentation. They are useful but not in your notes.</p>
+  </div>
+</header>
+
+<!-- ================= ERRATA ================= -->
+<section id="errata">
+  <h2>Corrections to the lecture notes</h2>
+  <p>I checked every statement in the notes. These are the places where the notes are wrong or would not work as written. Each correction is repeated in the relevant section below.</p>
+  <ul class="errata">
+    <li><span class="where">Section on MPI_Send variants</span>
+      <span class="was">Notes:</span> MPI_Isend is the blocking variant, MPI_Ssend is the non-blocking one.<br>
+      <span class="is">Correct:</span> it is the other way round. <code>MPI_Isend</code> is <b>non-blocking</b> (the “I” means <i>immediate</i>). <code>MPI_Ssend</code> is a <b>blocking synchronous</b> send: it returns only after the matching receive has started.</li>
+    <li><span class="where">Wildcard arguments</span>
+      <span class="was">Notes:</span> pass <code>MPI_ANY_SOURCE</code> as the 3rd argument and <code>MPI_ANY_TAG</code> as the 4th.<br>
+      <span class="is">Correct:</span> in <code>MPI_Recv</code> the source is the <b>4th</b> argument and the tag is the <b>5th</b>. The 3rd argument is the datatype.</li>
+    <li><span class="where">Deadlock example, line 5</span>
+      <span class="was">Notes:</span> <code>else if (my_rank == 0)</code><br>
+      <span class="is">Correct:</span> <code>else if (my_rank == 1)</code>. As printed, the second branch can never run, so process 1 would do nothing at all. The surrounding text clearly means process 1.</li>
+    <li><span class="where">Running on two machines</span>
+      <span class="was">Notes:</span> <code>mpiexec -hosts 2 ip_1 ip_2</code><br>
+      <span class="is">Correct for Open MPI</span> (the library the notes install): <code>mpiexec --host ip_1,ip_2 -n 2 ./prog</code>. The notes' command also leaves out the program name. I could not find documentation for the <code>-hosts 2 ip_1 ip_2</code> form in current Open MPI or MPICH, so I can't confirm it ever worked. See <a href="#setup">section 2</a>.</li>
+    <li><span class="where">Minor</span>
+      The listing reference shows as “листинг ??” (a broken LaTeX reference), and “строки 14 и 15” refer to the <code>MPI_Comm_size</code> / <code>MPI_Comm_rank</code> lines. Line numbers were not printed in the PDF, so I refer to those calls by name instead.</li>
+  </ul>
+</section>
+
+<!-- ================= 1 MODEL ================= -->
+<section id="model">
+  <h2><span class="num">1</span>The distributed-memory model</h2>
+  <p><b>MPI</b> (Message Passing Interface) is an API for parallel and distributed computing. It assumes <b>distributed memory</b> <span class="ru">(распределённая память)</span>: each process can read and write <em>only its own memory</em>. Processes are connected by a network. If process 2 needs a value that lives in process 0’s memory, process 0 has to <b>send it as a message</b>.</p>
+  <figure>
+    <svg viewBox="0 0 640 210" role="img" aria-label="Three processor and memory pairs connected by a network">
+      <g>
+        <rect class="box" x="30" y="20" width="150" height="46" rx="8"/><text x="105" y="48" text-anchor="middle" font-weight="700">Process 0</text>
+        <rect class="mem" x="30" y="74" width="150" height="40" rx="8"/><text x="105" y="99" text-anchor="middle" class="mut" font-size="14">its own memory</text>
+        <rect class="box" x="245" y="20" width="150" height="46" rx="8"/><text x="320" y="48" text-anchor="middle" font-weight="700">Process 1</text>
+        <rect class="mem" x="245" y="74" width="150" height="40" rx="8"/><text x="320" y="99" text-anchor="middle" class="mut" font-size="14">its own memory</text>
+        <rect class="box" x="460" y="20" width="150" height="46" rx="8"/><text x="535" y="48" text-anchor="middle" font-weight="700">Process 2</text>
+        <rect class="mem" x="460" y="74" width="150" height="40" rx="8"/><text x="535" y="99" text-anchor="middle" class="mut" font-size="14">its own memory</text>
+      </g>
+      <path class="net" d="M105 114 V160 H535 V114 M320 114 V160"/>
+      <rect x="250" y="146" width="140" height="28" rx="14" fill="var(--bg)" stroke="var(--muted)" stroke-width="1.5"/>
+      <text x="320" y="165" text-anchor="middle" font-size="14" font-weight="600">network</text>
+      <text x="320" y="200" text-anchor="middle" class="mut" font-size="13.5">No process can read another process’s memory. Data moves only as messages.</text>
+    </svg>
+    <figcaption>Each “processor + memory” pair is isolated. Communication goes over the network.</figcaption>
+  </figure>
+  <p><b>Point-to-point communication</b> <span class="ru">(точечные коммуникации)</span> means one specific sender and one specific receiver, using <code>MPI_Send</code> and <code>MPI_Recv</code>. (Later lectures usually cover <i>collective</i> operations, where a whole group takes part.)</p>
+</section>
+
+<!-- ================= 2 SETUP ================= -->
+<section id="setup">
+  <h2><span class="num">2</span>Install, compile, run</h2>
+  <h3>Install Open MPI on Ubuntu</h3>
+  <div class="code"><span class="label">Shell</span><pre><code>sudo apt install openmpi-bin openmpi-doc libopenmpi-dev</code></pre></div>
+  <ul>
+    <li><code>openmpi-bin</code>: the tools <code>mpicc</code>, <code>mpiexec</code>, <code>mpirun</code>.</li>
+    <li><code>libopenmpi-dev</code>: the header <code>mpi.h</code> and libraries you compile against.</li>
+    <li><code>openmpi-doc</code>: man pages (e.g. <code>man MPI_Send</code>). I confirmed all three packages exist in current Ubuntu releases.</li>
+  </ul>
+
+  <h3>Compile</h3>
+  <div class="code"><span class="label">Shell</span><pre><code>mpicc prog.c -o prog</code></pre></div>
+  <p><code>mpicc</code> is a wrapper around your normal C compiler (usually gcc). It adds the MPI include paths and libraries for you.</p>
+
+  <h3>Run on one machine</h3>
+  <div class="code"><span class="label">Shell</span><pre><code>mpiexec -n 4 ./prog</code></pre></div>
+  <p>This starts <b>4 processes</b> (4 copies of the same program). Each copy gets a different rank: 0, 1, 2, 3. In Open MPI, <code>mpiexec</code> and <code>mpirun</code> are the same command.</p>
+  <div class="note beyond"><span class="tag">Beyond the lecture</span>
+    <p>If you ask for more processes than your machine has cores, Open MPI refuses to start. Add <code>--oversubscribe</code> (Open MPI 4.x, which Ubuntu 24.04 ships). In Open MPI 5.x the documented form is <code>--map-by :OVERSUBSCRIBE</code>. Check your version with <code>mpirun --version</code>.</p>
+  </div>
+
+  <h3>Run on two machines</h3>
+  <div class="note fix"><span class="tag">Corrected</span>
+    <p>The notes give <code>mpiexec -hosts 2 ip_1 ip_2</code>. That form is not in the current documentation and has no program name. Use one of these:</p>
+  </div>
+  <div class="code"><span class="label">Open MPI (what the notes install)</span><pre><code>mpiexec --host ip_1,ip_2 -n 2 ./prog
+<span class="cm"># more processes per machine: host:slots</span>
+mpiexec --host ip_1:4,ip_2:4 -n 8 ./prog</code></pre></div>
+  <div class="code"><span class="label">MPICH (Hydra launcher)</span><pre><code>mpiexec -hosts ip_1,ip_2 -n 2 ./prog</code></pre></div>
+  <p>For this to work, each machine needs:</p>
+  <ul>
+    <li>password-less SSH login from the machine where you type the command,</li>
+    <li>the same MPI installed and on the <code>PATH</code>,</li>
+    <li>the compiled <code>./prog</code> at the same path.</li>
+  </ul>
+</section>
+
+<!-- ================= 3 SKELETON ================= -->
+<section id="skeleton">
+  <h2><span class="num">3</span>Anatomy of an MPI program</h2>
+  <p>Here is the lecture’s “greetings” program with comments. Every process runs this same code; the <code>if</code> on the rank decides who does what.</p>
+  <div class="code"><span class="label">greetings.c</span><button class="copy" type="button">Copy</button><pre><code><span class="kw">#include</span> &lt;mpi.h&gt;
+<span class="kw">#include</span> &lt;string.h&gt;
+<span class="kw">#include</span> &lt;stdio.h&gt;
+<span class="kw">#define</span> MAX_SIZE 100
+
+<span class="kw">int</span> main() {
+    <span class="kw">int</span> comm_sz;               <span class="cm">// number of processes</span>
+    <span class="kw">int</span> my_rank;               <span class="cm">// my number: 0 .. comm_sz-1</span>
+    <span class="kw">char</span> greeting[MAX_SIZE];
+
+    <span class="fn">MPI_Init</span>(NULL, NULL);                       <span class="cm">// start MPI</span>
+    <span class="fn">MPI_Comm_size</span>(MPI_COMM_WORLD, &amp;comm_sz);    <span class="cm">// how many of us?</span>
+    <span class="fn">MPI_Comm_rank</span>(MPI_COMM_WORLD, &amp;my_rank);    <span class="cm">// who am I?</span>
+
+    <span class="kw">if</span> (my_rank != 0) {
+        <span class="cm">// every worker: build a string and send it to process 0</span>
+        sprintf(greeting, <span class="st">"Greetings from process %d of %d"</span>,
+                my_rank, comm_sz);
+        <span class="fn">MPI_Send</span>(greeting, strlen(greeting) + 1,  <span class="cm">// +1 for the '\0'</span>
+                 MPI_CHAR, 0, 0, MPI_COMM_WORLD);
+    } <span class="kw">else</span> {
+        <span class="cm">// process 0: print own line, then receive from 1, 2, ... in order</span>
+        printf(<span class="st">"Greetings from process %d of %d\n"</span>, my_rank, comm_sz);
+        <span class="kw">for</span> (<span class="kw">int</span> i = 1; i &lt; comm_sz; i++) {
+            <span class="fn">MPI_Recv</span>(greeting, MAX_SIZE, MPI_CHAR,
+                     i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            printf(<span class="st">"%s\n"</span>, greeting);
+        }
+    }
+
+    <span class="fn">MPI_Finalize</span>();                              <span class="cm">// shut MPI down</span>
+    <span class="kw">return</span> 0;
+}</code></pre></div>
+  <p>With <code>mpiexec -n 4 ./prog</code> it prints:</p>
+  <div class="code"><span class="label">Output</span><pre><code>Greetings from process 0 of 4
+Greetings from process 1 of 4
+Greetings from process 2 of 4
+Greetings from process 3 of 4</code></pre></div>
+  <p>The order is always 1, 2, 3 because process 0 asks for rank 1 first, then rank 2, then rank 3, even if rank 3 was ready earlier. <a href="#wild">Section 6</a> shows how to take messages in whatever order they arrive.</p>
+  <p class="ru" style="font-style:normal;font-size:15px">I could not compile and run this code here (MPI could not be installed in my environment), so the output above is the expected result from reading the code, not a captured run. The code has no errors I can find.</p>
+
+  <h3>MPI_Init and MPI_Finalize</h3>
+  <p><b>All MPI calls must sit between <code>MPI_Init</code> and <code>MPI_Finalize</code>.</b></p>
+  <ul>
+    <li><code>MPI_Init(&amp;argc, &amp;argv)</code> sets MPI up: it takes pointers to the command-line arguments (passing <code>NULL, NULL</code> is allowed), prepares buffers for messages, and assigns a rank to each process.</li>
+    <li><code>MPI_Finalize()</code> frees everything MPI allocated. No MPI calls after it.</li>
+  </ul>
+
+  <h3>Communicator, size, rank</h3>
+  <div class="tbl"><table>
+    <tr><th>Term</th><th>Meaning</th></tr>
+    <tr><td><b>Communicator</b> <span class="ru">коммуникатор</span></td><td>A set of processes that can talk to each other. A message can only be sent and received <b>within one communicator</b>.</td></tr>
+    <tr><td><code>MPI_COMM_WORLD</code></td><td>The communicator that contains <b>all</b> processes the user started.</td></tr>
+    <tr><td><b>Size</b> (<code>MPI_Comm_size</code>)</td><td>How many processes are in the communicator. Stored in <code>comm_sz</code>.</td></tr>
+    <tr><td><b>Rank</b> <span class="ru">ранг</span> (<code>MPI_Comm_rank</code>)</td><td>This process’s number inside the communicator: 0, 1, …, size−1. Stored in <code>my_rank</code>.</td></tr>
+  </table></div>
+</section>
+
+<!-- ================= 4 SEND ================= -->
+<section id="send">
+  <h2><span class="num">4</span>MPI_Send</h2>
+  <div class="code"><span class="label">Signature (as in the MPI standard)</span><pre><code><span class="kw">int</span> <span class="fn">MPI_Send</span>(<span class="kw">const void</span> *buf, <span class="kw">int</span> count, MPI_Datatype datatype,
+             <span class="kw">int</span> dest, <span class="kw">int</span> tag, MPI_Comm comm);</code></pre></div>
+  <p>The notes write the 3rd parameter without a name and call the 2nd one <code>size</code>; the standard names are shown above. It returns an error code (<code>MPI_SUCCESS</code> on success).</p>
+  <div class="tbl"><table>
+    <tr><th>#</th><th>Argument</th><th>Meaning</th></tr>
+    <tr><td class="n">1</td><td><code>buf</code></td><td rowspan="1">Where the data is stored</td></tr>
+    <tr><td class="n">2</td><td><code>count</code></td><td>How many <b>elements</b> (not bytes)</td></tr>
+    <tr><td class="n">3</td><td><code>datatype</code></td><td>Type of each element: <code>MPI_CHAR</code>, <code>MPI_INT</code>, <code>MPI_DOUBLE</code>, …</td></tr>
+    <tr><td class="n">4</td><td><code>dest</code></td><td>Rank of the <b>receiver</b></td></tr>
+    <tr><td class="n">5</td><td><code>tag</code></td><td>A number you choose to label the message, so the receiver can tell what kind of data it is</td></tr>
+    <tr><td class="n">6</td><td><code>comm</code></td><td>The communicator</td></tr>
+  </table></div>
+  <p>Memory aid: arguments 1–3 describe <b>the message</b> (where, how many, what type). Arguments 4–6 describe <b>the envelope</b> (to whom, which label, in which group).</p>
+</section>
+
+<!-- ================= 5 RECV ================= -->
+<section id="recv">
+  <h2><span class="num">5</span>MPI_Recv</h2>
+  <div class="code"><span class="label">Signature</span><pre><code><span class="kw">int</span> <span class="fn">MPI_Recv</span>(<span class="kw">void</span> *buf, <span class="kw">int</span> count, MPI_Datatype datatype,
+             <span class="kw">int</span> source, <span class="kw">int</span> tag, MPI_Comm comm,
+             MPI_Status *status);</code></pre></div>
+  <div class="tbl"><table>
+    <tr><th>#</th><th>Argument</th><th>Meaning</th></tr>
+    <tr><td class="n">1</td><td><code>buf</code></td><td>Where to <b>write</b> the received data</td></tr>
+    <tr><td class="n">2</td><td><code>count</code></td><td>The <b>maximum</b> number of elements that fit in <code>buf</code></td></tr>
+    <tr><td class="n">3</td><td><code>datatype</code></td><td>Type of each element</td></tr>
+    <tr><td class="n">4</td><td><code>source</code></td><td>Rank of the <b>sender</b> (or <code>MPI_ANY_SOURCE</code>)</td></tr>
+    <tr><td class="n">5</td><td><code>tag</code></td><td>Expected tag (or <code>MPI_ANY_TAG</code>)</td></tr>
+    <tr><td class="n">6</td><td><code>comm</code></td><td>The communicator</td></tr>
+    <tr><td class="n">7</td><td><code>status</code></td><td><b>Output:</b> who actually sent it and with what tag. Pass <code>MPI_STATUS_IGNORE</code> if you don’t need it.</td></tr>
+  </table></div>
+  <div class="note key"><span class="tag">Key difference from Send</span>
+    <p>When <code>MPI_Recv</code> returns, the message <b>has arrived</b> and is in your buffer. When <code>MPI_Send</code> returns, you <b>don’t know</b> whether the receiver got it yet (see <a href="#inside">section 7</a>).</p>
+  </div>
+</section>
+
+<!-- ================= 6 WILDCARDS ================= -->
+<section id="wild">
+  <h2><span class="num">6</span>Wildcards and MPI_Status</h2>
+  <h3>The problem</h3>
+  <p>Several processes send to process 0. Process 5 is ready to send, but process 1 is still computing. If process 0 is waiting in <code>MPI_Recv(..., source = 1, ...)</code>, it can’t leave that call until process 1’s message arrives. Meanwhile process 5’s message sits unused and the network idles.</p>
+  <h3>The fix: wildcard arguments</h3>
+  <div class="note fix"><span class="tag">Corrected</span>
+    <p>The notes say “3rd and 4th argument”. The correct positions are the <b>4th</b> (source) and <b>5th</b> (tag).</p>
+  </div>
+  <ul>
+    <li><code>MPI_ANY_SOURCE</code> as <code>source</code>: accept a message from any sender.</li>
+    <li><code>MPI_ANY_TAG</code> as <code>tag</code>: accept a message with any tag.</li>
+  </ul>
+  <p>You can use one of them or both. Then process 0 takes whichever message is ready first.</p>
+  <h3>The new problem: who sent it, and how big was it?</h3>
+  <p>With wildcards you no longer know the sender or the tag in advance, and you may not know the size either. So you pass a real <code>MPI_Status</code> variable instead of <code>MPI_STATUS_IGNORE</code>:</p>
+  <div class="code"><span class="label">Receive from anyone, then inspect</span><button class="copy" type="button">Copy</button><pre><code>MPI_Status status;
+<span class="kw">int</span> buf[100], count;
+
+<span class="fn">MPI_Recv</span>(buf, 100, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG,
+         MPI_COMM_WORLD, &amp;status);
+
+<span class="kw">int</span> sender = status.MPI_SOURCE;            <span class="cm">// who sent it</span>
+<span class="kw">int</span> tag    = status.MPI_TAG;               <span class="cm">// which tag it had</span>
+<span class="fn">MPI_Get_count</span>(&amp;status, MPI_INT, &amp;count);  <span class="cm">// how many ints actually arrived</span></code></pre></div>
+  <div class="tbl"><table>
+    <tr><th>You want</th><th>Read it from</th></tr>
+    <tr><td>Sender’s rank</td><td><code>status.MPI_SOURCE</code></td></tr>
+    <tr><td>Message tag</td><td><code>status.MPI_TAG</code></td></tr>
+    <tr><td>Number of elements received</td><td><code>MPI_Get_count(&amp;status, datatype, &amp;count)</code></td></tr>
+  </table></div>
+  <div class="note beyond"><span class="tag">Beyond the lecture</span>
+    <p><code>MPI_Status</code> also has a field <code>MPI_ERROR</code>. To learn a message’s size <em>before</em> receiving it (for example, to allocate a buffer), the standard provides <code>MPI_Probe</code>: it waits for a matching message and fills a status without receiving the data.</p>
+  </div>
+</section>
+
+<!-- ================= 7 INSIDE ================= -->
+<section id="inside">
+  <h2><span class="num">7</span>What happens inside MPI_Send</h2>
+  <p>First the data is packed into an <b>envelope</b> <span class="ru">(«конверт»)</span>: the data plus service information (sender, receiver, tag, communicator). Then one of two things happens:</p>
+  <figure>
+    <svg viewBox="0 0 640 230" role="img" aria-label="Small messages are buffered and Send returns; large messages wait for the receiver">
+      <text x="20" y="28" font-weight="700" class="okt">Small message: buffered</text>
+      <rect class="box" x="20" y="44" width="120" height="40" rx="8"/><text x="80" y="69" text-anchor="middle" font-weight="600">MPI_Send</text>
+      <path class="arrow" d="M140 64 H230" marker-end="url(#ah)"/>
+      <rect class="okbox" x="232" y="44" width="170" height="40" rx="8"/><text x="317" y="69" text-anchor="middle" font-size="14.5">copied to MPI’s buffer</text>
+      <path class="arrow" d="M402 64 H460" marker-end="url(#ah)"/>
+      <text x="468" y="61" font-size="14.5" font-weight="600">Send returns</text>
+      <text x="468" y="79" font-size="13" class="mut">receiver may not have it yet</text>
+
+      <text x="20" y="138" font-weight="700" class="err">Large message: waits for receiver</text>
+      <rect class="box" x="20" y="154" width="120" height="40" rx="8"/><text x="80" y="179" text-anchor="middle" font-weight="600">MPI_Send</text>
+      <path class="arrow" d="M140 174 H230" marker-end="url(#ah)"/>
+      <rect class="blk" x="232" y="154" width="170" height="40" rx="8"/><text x="317" y="179" text-anchor="middle" font-size="14.5">blocked until Recv</text>
+      <path class="arrow" d="M402 174 H460" marker-end="url(#ah)"/>
+      <text x="468" y="171" font-size="14.5" font-weight="600">data transferred</text>
+      <text x="468" y="189" font-size="13" class="mut">then Send returns</text>
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--accent)"/></marker></defs>
+    </svg>
+    <figcaption>Which path is taken depends on message size and on the MPI implementation. The size threshold is not fixed by the standard.</figcaption>
+  </figure>
+  <ol>
+    <li><b>Buffered</b> <span class="ru">(кэширование)</span>: MPI copies the message into its internal memory and <code>MPI_Send</code> returns right away. Typical for <b>small</b> messages.</li>
+    <li><b>Wait for the receiver</b>: the transfer starts only when the receiver calls the matching <code>MPI_Recv</code>, and <code>MPI_Send</code> blocks until then. Typical for messages <b>above a threshold</b>.</li>
+  </ol>
+  <p>So after <code>MPI_Send</code> returns, you only know that <b>your buffer is safe to reuse</b>. You don’t know whether the message was delivered.</p>
+  <div class="note beyond"><span class="tag">Beyond the lecture</span>
+    <p>These two behaviours are usually called the <b>eager</b> protocol and the <b>rendezvous</b> protocol. The threshold between them depends on the MPI implementation and its settings.</p>
+  </div>
+
+  <h3>Variants of Send</h3>
+  <div class="note fix"><span class="tag">Corrected</span>
+    <p>The notes swap these two. The table shows the correct meaning.</p>
+  </div>
+  <div class="tbl"><table>
+    <tr><th>Function</th><th>Blocking?</th><th>When it returns</th></tr>
+    <tr><td><code>MPI_Send</code></td><td>Blocking (standard mode)</td><td>When the buffer can be reused. The message may only be buffered, not delivered.</td></tr>
+    <tr><td><code>MPI_Ssend</code></td><td><b>Blocking</b>, synchronous</td><td>Only after the matching receive has started. Never just buffers.</td></tr>
+    <tr><td><code>MPI_Isend</code></td><td><b>Non-blocking</b> (“I” = immediate)</td><td>Immediately. It gives you an <code>MPI_Request</code>; call <code>MPI_Wait</code> or <code>MPI_Test</code> before touching the buffer again.</td></tr>
+  </table></div>
+  <div class="note beyond"><span class="tag">Beyond the lecture</span>
+    <p>A useful debugging trick: replace <code>MPI_Send</code> with <code>MPI_Ssend</code>. If your program then hangs, it was relying on buffering and could deadlock with larger messages.</p>
+  </div>
+</section>
+
+<!-- ================= 8 MATCHING ================= -->
+<section id="match">
+  <h2><span class="num">8</span>When does a Send meet a Recv?</h2>
+  <p>Process <b>q</b> calls</p>
+  <div class="code"><pre><code><span class="fn">MPI_Send</span>(send_buf_p, send_buf_sz, send_type, dest, send_tag, send_comm);</code></pre></div>
+  <p>and process <b>r</b> calls</p>
+  <div class="code"><pre><code><span class="fn">MPI_Recv</span>(recv_buf_p, recv_buf_sz, recv_type, source, recv_tag, recv_comm, &amp;status);</code></pre></div>
+  <h3>For the two calls to match</h3>
+  <ul class="checks">
+    <li><span class="b must">1</span><span><code>recv_comm == send_comm</code> (same communicator)</span></li>
+    <li><span class="b must">2</span><span><code>recv_tag == send_tag</code>, or the receiver used <code>MPI_ANY_TAG</code></span></li>
+    <li><span class="b must">3</span><span><code>dest == r</code> and <code>source == q</code>, or the receiver used <code>MPI_ANY_SOURCE</code></span></li>
+  </ul>
+  <h3>For the data to arrive correctly, also</h3>
+  <ul class="checks">
+    <li><span class="b ok">4</span><span><code>recv_type == send_type</code></span></li>
+    <li><span class="b ok">5</span><span><code>recv_buf_sz ≥ send_buf_sz</code>: the receive buffer is at least as big as the message</span></li>
+  </ul>
+  <div class="note beyond"><span class="tag">Beyond the lecture</span>
+    <p>If the message is <b>larger</b> than the receive buffer, MPI reports an overflow error (<code>MPI_ERR_TRUNCATE</code>). If it is <b>smaller</b>, that’s fine: only part of the buffer is filled, and <code>MPI_Get_count</code> tells you how much.</p>
+  </div>
+
+  <h3>Message order <span class="ru">(порядок сообщений)</span></h3>
+  <div class="tbl"><table>
+    <tr><th>Situation</th><th>Guarantee</th></tr>
+    <tr><td>q sends two messages to r</td><td><b>Ordered.</b> The first one sent becomes available to r before the second. Messages don’t overtake each other.</td></tr>
+    <tr><td>Two different processes send to r</td><td><b>No guarantee.</b> Which one is available first depends on timing and the network.</td></tr>
+  </table></div>
+  <p class="ru" style="font-style:normal;font-size:15px">Precisely, the standard’s ordering rule applies when both messages could match the same receive (same communicator; the receive’s source and tag accept both). If r asks for a specific tag, it can still receive a later message with that tag first.</p>
+</section>
+
+<!-- ================= 9 DEADLOCK ================= -->
+<section id="deadlock">
+  <h2><span class="num">9</span>Deadlock</h2>
+  <p><b>Deadlock</b> <span class="ru">(взаимная блокировка)</span>: several processes each wait for something that another one holds, so none of them can continue.</p>
+  <h3>The classic example: swapping arrays</h3>
+  <p>Two processes want to exchange their arrays <code>a</code> (10 000 ints each). Line 5 is corrected:</p>
+  <div class="code"><span class="label">Deadlocks for large messages</span><pre><code><span class="cm">1</span>  <span class="kw">if</span> (my_rank == 0) {
+<span class="cm">2</span>      <span class="fn">MPI_Send</span>(a, 10000, MPI_INT, 1, 0, MPI_COMM_WORLD);
+<span class="cm">3</span>      <span class="fn">MPI_Recv</span>(a, 10000, MPI_INT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+<span class="cm">4</span>  }
+<span class="hl"><span class="cm">5</span>  <span class="kw">else if</span> (my_rank == 1) {           <span class="cm">// notes say == 0: a typo</span></span>
+<span class="cm">6</span>      <span class="fn">MPI_Send</span>(a, 10000, MPI_INT, 0, 0, MPI_COMM_WORLD);
+<span class="cm">7</span>      <span class="fn">MPI_Recv</span>(a, 10000, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+<span class="cm">8</span>  }</code></pre></div>
+  <p class="ru" style="font-style:normal;font-size:15px">The notes write <code>&amp;a</code>. If <code>a</code> is an array, <code>&amp;a</code> and <code>a</code> point to the same address, so it still works; plain <code>a</code> is the usual way to write it.</p>
+  <figure>
+    <svg viewBox="0 0 640 200" role="img" aria-label="Both processes are blocked in Send waiting for the other's Recv">
+      <text x="20" y="44" font-weight="700">Process 0</text>
+      <text x="20" y="144" font-weight="700">Process 1</text>
+      <line class="lane" x1="110" y1="40" x2="620" y2="40"/>
+      <line class="lane" x1="110" y1="140" x2="620" y2="140"/>
+      <rect class="blk" x="150" y="22" width="200" height="36" rx="8"/><text x="250" y="45" text-anchor="middle" font-size="14.5" font-weight="600">line 2: Send → 1 … waiting</text>
+      <rect class="blk" x="150" y="122" width="200" height="36" rx="8"/><text x="250" y="145" text-anchor="middle" font-size="14.5" font-weight="600">line 6: Send → 0 … waiting</text>
+      <rect class="mem" x="400" y="22" width="150" height="36" rx="8" stroke-dasharray="4 4"/><text x="475" y="45" text-anchor="middle" font-size="14" class="mut">line 3: Recv (never)</text>
+      <rect class="mem" x="400" y="122" width="150" height="36" rx="8" stroke-dasharray="4 4"/><text x="475" y="145" text-anchor="middle" font-size="14" class="mut">line 7: Recv (never)</text>
+      <path class="arrow-err" d="M300 58 C 320 90, 440 95, 470 122"/>
+      <path class="arrow-err" d="M300 122 C 320 90, 440 85, 470 58"/>
+      <text x="610" y="96" text-anchor="end" font-size="13.5" class="err" font-weight="600">each waits for the other’s Recv</text>
+    </svg>
+    <figcaption>Both processes are stuck in Send. Neither ever reaches its Recv.</figcaption>
+  </figure>
+  <p>Why: the array is large, so <code>MPI_Send</code> waits for the receiver (<a href="#inside">section 7</a>). Process 0 blocks on line 2, waiting for process 1 to call Recv. Process 1 blocks on line 6, waiting for process 0 to call Recv. Neither ever gets there.</p>
+  <div class="note warn"><span class="tag">Trap</span>
+    <p>With <b>short</b> messages (single variables instead of arrays), this code will <b>probably work</b>, because Send just buffers the message and returns. The code is still wrong: it relies on buffering that MPI doesn’t promise, and it will hang once the data grows.</p>
+  </div>
+</section>
+
+<!-- ================= 10 SENDRECV ================= -->
+<section id="sendrecv">
+  <h2><span class="num">10</span>The fix: MPI_Sendrecv</h2>
+  <p><code>MPI_Sendrecv</code> performs a send and a receive <b>as one call</b>. MPI itself arranges the two transfers so they can’t block each other.</p>
+  <div class="code"><span class="label">Signature</span><pre><code><span class="kw">int</span> <span class="fn">MPI_Sendrecv</span>(
+    <span class="kw">const void</span> *sendbuf, <span class="kw">int</span> sendcount, MPI_Datatype sendtype,
+    <span class="kw">int</span> dest,   <span class="kw">int</span> sendtag,
+    <span class="kw">void</span> *recvbuf,       <span class="cm">// OUT</span>
+    <span class="kw">int</span> recvcount, MPI_Datatype recvtype,
+    <span class="kw">int</span> source, <span class="kw">int</span> recvtag,
+    MPI_Comm comm,
+    MPI_Status *status    <span class="cm">// OUT</span>
+);</code></pre></div>
+  <p>Read it as: the first 5 arguments are a Send, the next 5 are a Recv, then one shared communicator and a status.</p>
+  <div class="note beyond"><span class="tag">Beyond the lecture</span>
+    <p>The MPI standard requires <code>sendbuf</code> and <code>recvbuf</code> to be <b>different, non-overlapping</b> memory. If you want to send and receive into the same array, use <code>MPI_Sendrecv_replace</code> below.</p>
+  </div>
+  <div class="code"><span class="label">Swap fixed with MPI_Sendrecv (two arrays)</span><button class="copy" type="button">Copy</button><pre><code><span class="kw">int</span> partner = (my_rank == 0) ? 1 : 0;
+<span class="fn">MPI_Sendrecv</span>(a, 10000, MPI_INT, partner, 0,     <span class="cm">// send my a</span>
+             b, 10000, MPI_INT, partner, 0,     <span class="cm">// receive into b</span>
+             MPI_COMM_WORLD, MPI_STATUS_IGNORE);</code></pre></div>
+
+  <h3>Same buffer for both: MPI_Sendrecv_replace</h3>
+  <div class="code"><span class="label">Signature</span><pre><code><span class="kw">int</span> <span class="fn">MPI_Sendrecv_replace</span>(
+    <span class="kw">void</span> *buf,           <span class="cm">// OUT: sent from, then overwritten</span>
+    <span class="kw">int</span> count, MPI_Datatype datatype,
+    <span class="kw">int</span> dest,   <span class="kw">int</span> sendtag,
+    <span class="kw">int</span> source, <span class="kw">int</span> recvtag,
+    MPI_Comm comm,
+    MPI_Status *status    <span class="cm">// OUT</span>
+);</code></pre></div>
+  <div class="code"><span class="label">Swap fixed with one array</span><button class="copy" type="button">Copy</button><pre><code><span class="kw">int</span> partner = (my_rank == 0) ? 1 : 0;
+<span class="fn">MPI_Sendrecv_replace</span>(a, 10000, MPI_INT,
+                     partner, 0,   <span class="cm">// send to partner, tag 0</span>
+                     partner, 0,   <span class="cm">// receive from partner, tag 0</span>
+                     MPI_COMM_WORLD, MPI_STATUS_IGNORE);</code></pre></div>
+  <p>Both processes run the same line, and no <code>if</code> is needed beyond choosing the partner.</p>
+  <div class="note beyond"><span class="tag">Beyond the lecture</span>
+    <p>Another common fix is to change the order on one side: process 0 does Send then Recv, process 1 does Recv then Send. That also avoids the deadlock, but the two transfers then happen one after another instead of together.</p>
+  </div>
+</section>
+
+<!-- ================= CHEAT ================= -->
+<section id="cheat">
+  <h2>Cheat sheet</h2>
+  <div class="cheat">
+    <div><h4>Program frame</h4><p><code>MPI_Init</code> → <code>MPI_Comm_size</code> / <code>MPI_Comm_rank</code> → work → <code>MPI_Finalize</code></p></div>
+    <div><h4>Send</h4><p><code>(buf, count, type, dest, tag, comm)</code><br>Returns: buffer reusable. Not proof of delivery.</p></div>
+    <div><h4>Recv</h4><p><code>(buf, count, type, source, tag, comm, status)</code><br>Returns: message received.</p></div>
+    <div><h4>Wildcards</h4><p><code>MPI_ANY_SOURCE</code> (arg 4), <code>MPI_ANY_TAG</code> (arg 5). Then read <code>status.MPI_SOURCE</code>, <code>status.MPI_TAG</code>, <code>MPI_Get_count</code>.</p></div>
+    <div><h4>Match needs</h4><p>Same comm, same tag, right ranks. For correct data: same type, receive buffer ≥ message.</p></div>
+    <div><h4>Ordering</h4><p>Same sender → same receiver: in order. Different senders: no guarantee.</p></div>
+    <div><h4>Send variants</h4><p><code>Ssend</code>: blocking, waits for receiver. <code>Isend</code>: non-blocking, finish with <code>MPI_Wait</code>.</p></div>
+    <div><h4>Deadlock fix</h4><p><code>MPI_Sendrecv</code> (two buffers) or <code>MPI_Sendrecv_replace</code> (one buffer).</p></div>
+    <div><h4>Commands</h4><p><code>mpicc prog.c -o prog</code><br><code>mpiexec -n 4 ./prog</code><br><code>mpiexec --host h1,h2 -n 2 ./prog</code></p></div>
+  </div>
+</section>
+
+<!-- ================= QUIZ ================= -->
+<section id="quiz">
+  <h2>Self-check</h2>
+  <p>Answer in your head first, then open.</p>
+  <details><summary>Process 3 wants to send 50 doubles stored in <code>x</code> to process 0 with tag 7. Write the call.</summary>
+    <div><code>MPI_Send(x, 50, MPI_DOUBLE, 0, 7, MPI_COMM_WORLD);</code></div></details>
+  <details><summary><code>MPI_Send</code> returned. Has the receiver got the message?</summary>
+    <div>Not necessarily. The message may only have been copied into MPI’s internal buffer. You only know that your send buffer can be reused. (<code>MPI_Recv</code> returning <em>does</em> mean the message arrived.)</div></details>
+  <details><summary>Which one is non-blocking: <code>MPI_Isend</code> or <code>MPI_Ssend</code>?</summary>
+    <div><code>MPI_Isend</code>. <code>MPI_Ssend</code> blocks until the matching receive has started. The lecture notes have these swapped.</div></details>
+  <details><summary>You receive with <code>MPI_ANY_SOURCE</code>. How do you find out who sent the message and how many elements came?</summary>
+    <div>Pass <code>&amp;status</code> instead of <code>MPI_STATUS_IGNORE</code>. Then <code>status.MPI_SOURCE</code> is the sender, and <code>MPI_Get_count(&amp;status, type, &amp;n)</code> gives the element count.</div></details>
+  <details><summary>Process 1 sends message A then message B to process 0 (same tag, same communicator). Process 2 sends message C to process 0. What order is guaranteed?</summary>
+    <div>Only that A is available before B. Where C falls relative to A and B is not guaranteed.</div></details>
+  <details><summary>The array-swap code works in your tests with <code>int x</code> but hangs with <code>int a[10000]</code>. Why?</summary>
+    <div>Small messages are buffered, so both Sends return and both processes reach their Recv. Large messages make Send wait for the receiver, and both processes wait on each other forever: deadlock. Fix it with <code>MPI_Sendrecv</code> or <code>MPI_Sendrecv_replace</code>.</div></details>
+  <details><summary>The sender sends 20 ints; the receiver posts <code>MPI_Recv</code> with count 10. What happens?</summary>
+    <div>The message doesn’t fit, so MPI reports a truncation error (<code>MPI_ERR_TRUNCATE</code>). The receive count must be at least the size of the message. (From the MPI standard; the notes only state the ≥ rule.)</div></details>
+  <details><summary>Can you use <code>MPI_Sendrecv</code> with the same array as send and receive buffer?</summary>
+    <div>No, the standard requires the two buffers to be separate. Use <code>MPI_Sendrecv_replace</code> for one shared buffer.</div></details>
+</section>
+
+<footer>
+  <p>Sources checked: the MPI-4.1 standard (sections on blocking send-receive and probe), Open MPI mpirun documentation (v4.1 man page and v5.0 docs), MPICH mailing-list documentation of <code>-hosts</code>, Microsoft MPI reference for <code>MPI_Isend</code>/<code>MPI_Ssend</code>, ANL MPI tutorial on communication modes, and Ubuntu package listings.</p>
+</footer>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var code = btn.parentElement.querySelector('pre').innerText;
+    var done = function(){ btn.textContent = 'Copied'; setTimeout(function(){ btn.textContent = 'Copy'; }, 1400); };
+    try {
+      navigator.clipboard.writeText(code).then(done, function(){ selectIt(); });
+    } catch(e){ selectIt(); }
+    function selectIt(){
+      var r = document.createRange(); r.selectNodeContents(btn.parentElement.querySelector('pre'));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = 'Press Ctrl+C';
+    }
+  });
+});
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var map = {}; links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+  if (!('IntersectionObserver' in window)) return;
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting){ links.forEach(function(l){ l.classList.remove('on'); }); var a = map[e.target.id]; if (a) a.classList.add('on'); }
+    });
+  }, {rootMargin:'-20% 0px -70% 0px'});
+  document.querySelectorAll('main section[id]').forEach(function(s){ io.observe(s); });
+})();
+</script>
+
+</body></html>

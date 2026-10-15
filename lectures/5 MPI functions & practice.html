@@ -1,0 +1,721 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>MPI Collectives Handbook</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: same handbook system as Lecture 4 — sticky contents rail on wide screens, one calm reading column (~72ch), code and diagrams as the only "objects". */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --code-bg:#eef1f6; --fg:#1d2330; --muted:#5a6375; --line:#d8dde6;
+  --accent:#2148b8; --accent-soft:#e3e9fa;
+  --warn:#9a5b00; --warn-soft:#fdf1dc; --err:#b42335; --err-soft:#fbe6e9; --ok:#1d7a4c; --ok-soft:#e1f3e9;
+  --beyond:#6b3fa0; --beyond-soft:#efe8f8;
+  --p0:#2148b8; --p1:#1d7a4c; --p2:#9a5b00; --p3:#6b3fa0;
+  --c-comment:#6b7385; --c-kw:#2148b8; --c-str:#1d7a4c; --c-fn:#9a3412;
+  --f-display:"Literata", Georgia, "Times New Roman", serif;
+  --f-body:"Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#14171d; --surface:#1b1f27; --code-bg:#20252f; --fg:#e3e6ec; --muted:#9aa3b4; --line:#2f3542;
+  --accent:#8eabff; --accent-soft:#232c45;
+  --warn:#f0b45a; --warn-soft:#33281a; --err:#ff8a98; --err-soft:#3a2026; --ok:#6fd3a0; --ok-soft:#1a3328;
+  --beyond:#c4a4f0; --beyond-soft:#2c2338;
+  --p0:#8eabff; --p1:#6fd3a0; --p2:#f0b45a; --p3:#c4a4f0;
+  --c-comment:#8a93a6; --c-kw:#8eabff; --c-str:#6fd3a0; --c-fn:#f4a37a;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#14171d; --surface:#1b1f27; --code-bg:#20252f; --fg:#e3e6ec; --muted:#9aa3b4; --line:#2f3542;
+  --accent:#8eabff; --accent-soft:#232c45;
+  --warn:#f0b45a; --warn-soft:#33281a; --err:#ff8a98; --err-soft:#3a2026; --ok:#6fd3a0; --ok-soft:#1a3328;
+  --beyond:#c4a4f0; --beyond-soft:#2c2338;
+  --p0:#8eabff; --p1:#6fd3a0; --p2:#f0b45a; --p3:#c4a4f0;
+  --c-comment:#8a93a6; --c-kw:#8eabff; --c-str:#6fd3a0; --c-fn:#f4a37a;
+  color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:17.5px;line-height:1.65;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:56px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}.toc{display:none}}
+main{min-width:0;max-width:72ch}
+
+.toc{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-top:48px;max-height:100vh;overflow:auto;font-size:14.5px}
+.toc p{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px;font-weight:600}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.toc a{display:block;padding:5px 10px;border-radius:6px;color:var(--muted);text-decoration:none;border-left:2px solid transparent}
+.toc a:hover,.toc a:focus-visible{color:var(--fg);background:var(--accent-soft)}
+.toc a.on{color:var(--accent);border-left-color:var(--accent);font-weight:600}
+
+header.hero{padding-block:48px 8px}
+.eyebrow{font-size:13px;text-transform:uppercase;letter-spacing:.09em;color:var(--accent);font-weight:700;margin:0}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(2rem,4.5vw,2.8rem);line-height:1.15;margin:.3em 0 .4em;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:700;font-size:1.65rem;line-height:1.25;margin:0 0 .6em;text-wrap:balance}
+h2 .num{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:.35em}
+h3{font-size:1.13rem;font-weight:700;margin:1.8em 0 .5em}
+.lede{font-size:1.15rem;color:var(--muted);margin:0}
+.ru{color:var(--muted);font-style:italic;font-weight:400}
+.small{color:var(--muted);font-size:15px}
+section{padding-block:44px 8px;border-top:1px solid var(--line);margin-top:40px;scroll-margin-top:16px}
+p{margin:0 0 1em}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:.1em .35em;border-radius:4px;overflow-wrap:anywhere}
+ul,ol{padding-left:1.3em;margin:0 0 1em}
+li{margin:.25em 0}
+
+.math{font-family:var(--f-display);font-size:1.12rem;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:1em 0 1.4em;overflow-x:auto;text-align:center;white-space:nowrap}
+.math i{font-style:italic}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .15em;line-height:1.15}
+.frac > span:first-child{border-bottom:1px solid currentColor;padding:0 .2em}
+
+.code{position:relative;margin:1em 0 1.4em}
+pre{margin:0;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;font-family:var(--f-mono);font-size:14px;line-height:1.6;tab-size:4}
+pre code{background:none;padding:0;font-size:inherit;overflow-wrap:normal}
+.code .label{display:inline-block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:6px}
+.copy{position:absolute;top:30px;right:8px;font:600 12px var(--f-body);color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+.cm{color:var(--c-comment);font-style:italic}.kw{color:var(--c-kw);font-weight:600}.st{color:var(--c-str)}.fn{color:var(--c-fn)}
+.ln{color:var(--c-comment);user-select:none}
+.hl{background:var(--err-soft);display:inline-block;width:100%}
+.hlok{background:var(--ok-soft);display:inline-block;width:100%}
+
+.note{border-radius:10px;padding:14px 18px;margin:1.2em 0;border:1px solid var(--line);background:var(--surface)}
+.note > :last-child{margin-bottom:0}
+.note .tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-bottom:6px}
+.note.key{background:var(--accent-soft);border-color:transparent}.note.key .tag{background:var(--accent);color:var(--surface)}
+.note.warn{background:var(--warn-soft);border-color:transparent}.note.warn .tag{background:var(--warn);color:var(--surface)}
+.note.fix{background:var(--err-soft);border-color:transparent}.note.fix .tag{background:var(--err);color:var(--surface)}
+.note.beyond{background:var(--beyond-soft);border-color:transparent}.note.beyond .tag{background:var(--beyond);color:var(--surface)}
+.chip{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:1px 8px;border-radius:999px;vertical-align:2px;margin-left:6px}
+.chip.beyond{background:var(--beyond-soft);color:var(--beyond)}
+
+.errata{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+.errata li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:0}
+.errata .was{color:var(--err);font-weight:600}.errata .is{color:var(--ok);font-weight:600}
+.errata .where{font-size:13px;color:var(--muted);display:block;margin-bottom:2px}
+.errata .kind{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:1px 7px;border-radius:999px;margin-left:6px}
+.kind.e{background:var(--err-soft);color:var(--err)}.kind.c{background:var(--warn-soft);color:var(--warn)}
+
+.tbl{overflow-x:auto;margin:1em 0 1.4em;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+th{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;background:var(--code-bg)}
+td.n{font-variant-numeric:tabular-nums;color:var(--muted);width:2.5em}
+td.num{font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:14px;white-space:nowrap}
+td code{white-space:nowrap}
+td.bad{color:var(--err);font-weight:600}
+
+figure{margin:1.4em 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto}
+figure svg{display:block;width:100%;height:auto;min-width:520px}
+figcaption{font-size:14px;color:var(--muted);margin-top:8px}
+svg text{font-family:var(--f-body);fill:var(--fg)}
+svg .mut{fill:var(--muted)}
+svg .nd{fill:var(--surface);stroke:var(--accent);stroke-width:1.6}
+svg .nd2{fill:var(--ok-soft);stroke:var(--ok);stroke-width:1.6}
+svg .ed{stroke:var(--accent);stroke-width:1.6}
+svg .ed2{stroke:var(--ok);stroke-width:1.6}
+svg .st{stroke:var(--muted);stroke-width:1.4;stroke-dasharray:4 4}
+svg .axis{stroke:var(--muted);stroke-width:1.5}
+svg .curve{fill:none;stroke:var(--fg);stroke-width:2}
+svg .tz{stroke-width:1.2;fill-opacity:.22}
+svg .tz.p0{fill:var(--p0);stroke:var(--p0)} svg .tz.p1{fill:var(--p1);stroke:var(--p1)}
+svg .tz.p2{fill:var(--p2);stroke:var(--p2)} svg .tz.p3{fill:var(--p3);stroke:var(--p3)}
+svg .t0{fill:var(--p0)} svg .t1{fill:var(--p1)} svg .t2{fill:var(--p2)} svg .t3{fill:var(--p3)}
+svg .box{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg .busy{fill:var(--err-soft);stroke:var(--err);stroke-width:1.5}
+svg .arrow{stroke:var(--accent);stroke-width:1.6;fill:none}
+svg .errt{fill:var(--err)} svg .okt{fill:var(--ok)}
+
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.cheat > div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.cheat h4{margin:0 0 6px;font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
+.cheat p{font-size:15px;margin:0}
+
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 16px;margin:0 0 10px}
+summary{cursor:pointer;padding:12px 0;font-weight:600;list-style:none;display:flex;gap:10px}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+";color:var(--accent);font-weight:700;width:1em;flex:none}
+details[open] summary::before{content:"−"}
+details > div{padding:0 0 14px 1.6em}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--accent)"/></marker>
+  <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--ok)"/></marker>
+</defs></svg>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <p>Contents</p>
+  <ol>
+    <li><a href="#errata">Corrections to the notes</a></li>
+    <li><a href="#trap">1 · The task: trapezoid rule</a></li>
+    <li><a href="#v1">2 · Version 1: Send/Recv only</a></li>
+    <li><a href="#tree">3 · The bottleneck &amp; the tree</a></li>
+    <li><a href="#reduce">4 · MPI_Reduce</a></li>
+    <li><a href="#bcast">5 · MPI_Bcast</a></li>
+    <li><a href="#allreduce">6 · MPI_Allreduce</a></li>
+    <li><a href="#v2">7 · Version 2: collectives</a></li>
+    <li><a href="#rules">8 · Rules of collectives</a></li>
+    <li><a href="#cheat">Cheat sheet</a></li>
+    <li><a href="#quiz">Self-check</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <p class="eyebrow">Lecture 5 · 6 October 2026</p>
+  <h1>Collective communication in MPI (part 1)</h1>
+  <p class="lede">Lecture 4 was about one sender and one receiver. Here <em>every</em> process in a communicator takes part in one operation. The lecture builds the idea around one example: computing an integral in parallel.</p>
+  <div class="note key" style="margin-top:20px">
+    <span class="tag">How to read this</span>
+    <p>Russian terms from the lecture appear in <span class="ru">italics</span>. Blocks marked <span class="chip beyond">Beyond the lecture</span> add context checked against the MPI standard or official documentation; they are not in your notes.</p>
+  </div>
+</header>
+
+<!-- ================= ERRATA ================= -->
+<section id="errata">
+  <h2>Corrections to the lecture notes</h2>
+  <p>I checked every statement and every listing. Lecture 5 is mostly correct; the issues below are one real mistake, one hidden assumption, and a few imprecise phrasings. Each is repeated where it matters.</p>
+  <ul class="errata">
+    <li><span class="where">Property 2 of collectives <span class="kind e">Error</span></span>
+      <span class="was">Notes:</span> “the call on line 59 can be replaced by” an <code>if/else</code> whose <b>two branches are identical</b>.<br>
+      <span class="is">Correct:</span> as printed, the example demonstrates nothing. The point is that non-root processes may pass any output pointer, for example <code>NULL</code>. The intended version is almost certainly the one shown in <a href="#rules">section 8</a>. I can’t know exactly what the lecturer meant to write in the <code>else</code> branch; <code>NULL</code> is the standard illustration.</li>
+    <li><span class="where">Listings 1 and 2 <span class="kind c">Hidden assumption</span></span>
+      Both programs only work when <b><code>n</code> is divisible by the number of processes</b>. Otherwise the last few trapezoids are silently skipped and the answer is wrong. I verified this numerically; see <a href="#v1">section 2</a>.</li>
+    <li><span class="where">MPI_Reduce signature <span class="kind c">Naming</span></span>
+      The signature names the 6th parameter <code>dest</code>, but the text calls it <code>root</code>. The standard name is <b><code>root</code></b>. The standard also declares the input buffer as <code>const void *</code>.</li>
+    <li><span class="where">Property 3 <span class="kind c">Incomplete</span></span>
+      <span class="was">Notes:</span> point-to-point messages match by communicator and tag.<br>
+      <span class="is">More precisely:</span> by communicator, tag <b>and</b> sender/receiver ranks, as Lecture 4 stated.</li>
+    <li><span class="where">MPI_Allreduce <span class="kind c">Imprecise</span></span>
+      <span class="was">Notes:</span> Allreduce “comes down to” calling Reduce and then Bcast.<br>
+      <span class="is">More precisely:</span> the <b>result</b> is the same as Reduce followed by Bcast. The MPI standard does not say how it is implemented, and libraries often use faster algorithms. Figure 2 shows one possible way, not the only one.</li>
+  </ul>
+</section>
+
+<!-- ================= 1 TRAP ================= -->
+<section id="trap">
+  <h2><span class="num">1</span>The task: integrate with the trapezoid rule</h2>
+  <p>We want the definite integral of <i>f</i> from <i>a</i> to <i>b</i>. Split [<i>a</i>, <i>b</i>] into <b><i>n</i></b> equal pieces of width <b><i>h</i></b>, approximate each piece by a trapezoid, and add the areas.</p>
+  <div class="math">
+    ∫<sub><i>a</i></sub><sup><i>b</i></sup> <i>f</i>(<i>x</i>) d<i>x</i> ≈
+    <span class="frac"><span><i>h</i></span><span>2</span></span>(<i>f</i>(<i>a</i>) + <i>f</i>(<i>b</i>))
+    + <i>h</i>(<i>f</i>(<i>x</i><sub>1</sub>) + <i>f</i>(<i>x</i><sub>2</sub>) + … + <i>f</i>(<i>x</i><sub><i>n</i>−1</sub>))
+  </div>
+  <div class="tbl"><table>
+    <tr><th>Symbol</th><th>Meaning</th></tr>
+    <tr><td><i>n</i></td><td>number of pieces (trapezoids)</td></tr>
+    <tr><td><i>h</i> = (<i>b</i> − <i>a</i>) / <i>n</i></td><td>width of one piece <span class="ru">(шаг разбиения)</span></td></tr>
+    <tr><td><i>x</i><sub>0</sub> = <i>a</i>, <i>x</i><sub><i>i</i></sub> = <i>a</i> + <i>i·h</i>, <i>x</i><sub><i>n</i></sub> = <i>b</i></td><td>the split points <span class="ru">(узлы разбиения)</span></td></tr>
+  </table></div>
+  <p>The ends <i>f</i>(<i>a</i>), <i>f</i>(<i>b</i>) get weight <i>h</i>/2 because each belongs to only one trapezoid. Every inner point belongs to two neighbouring trapezoids, so it gets weight <i>h</i>. I checked the formula: it is correct.</p>
+  <h3>How the work is split</h3>
+  <p>Each of the <i>p</i> processes takes <code>local_n = n / p</code> neighbouring trapezoids and computes their sum. Then the partial sums are added together.</p>
+  <figure>
+    <svg viewBox="0 0 640 300" role="img" aria-label="Area under y equals x squared from 0 to 3 split into 8 trapezoids, 2 per process">
+      <path class="tz p0" d="M60.0 250 L60.0 250.0 L125.0 246.7 L125.0 250Z"/>
+<path class="tz p0" d="M125.0 250 L125.0 246.7 L190.0 236.9 L190.0 250Z"/>
+<path class="tz p1" d="M190.0 250 L190.0 236.9 L255.0 220.5 L255.0 250Z"/>
+<path class="tz p1" d="M255.0 250 L255.0 220.5 L320.0 197.5 L320.0 250Z"/>
+<path class="tz p2" d="M320.0 250 L320.0 197.5 L385.0 168.0 L385.0 250Z"/>
+<path class="tz p2" d="M385.0 250 L385.0 168.0 L450.0 131.9 L450.0 250Z"/>
+<path class="tz p3" d="M450.0 250 L450.0 131.9 L515.0 89.2 L515.0 250Z"/>
+<path class="tz p3" d="M515.0 250 L515.0 89.2 L580.0 40.0 L580.0 250Z"/>
+<polyline class="curve" points="60.0,250.0 68.7,249.9 77.3,249.8 86.0,249.5 94.7,249.1 103.3,248.5 112.0,247.9 120.7,247.1 129.3,246.3 138.0,245.3 146.7,244.2 155.3,242.9 164.0,241.6 172.7,240.1 181.3,238.6 190.0,236.9 198.7,235.1 207.3,233.1 216.0,231.1 224.7,228.9 233.3,226.7 242.0,224.3 250.7,221.8 259.3,219.1 268.0,216.4 276.7,213.5 285.3,210.6 294.0,207.5 302.7,204.3 311.3,200.9 320.0,197.5 328.7,193.9 337.3,190.3 346.0,186.5 354.7,182.6 363.3,178.5 372.0,174.4 380.7,170.1 389.3,165.8 398.0,161.3 406.7,156.7 415.3,151.9 424.0,147.1 432.7,142.1 441.3,137.1 450.0,131.9 458.7,126.6 467.3,121.1 476.0,115.6 484.7,109.9 493.3,104.2 502.0,98.3 510.7,92.3 519.3,86.1 528.0,79.9 536.7,73.5 545.3,67.1 554.0,60.5 562.7,53.8 571.3,46.9 580.0,40.0"/>
+      <line class="axis" x1="50" y1="250" x2="600" y2="250"/>
+      <text x="60" y="272" text-anchor="middle" font-size="13" class="mut">a = 0</text>
+      <text x="580" y="272" text-anchor="middle" font-size="13" class="mut">b = 3</text>
+      <text x="125" y="292" text-anchor="middle" font-size="13.5" font-weight="700" class="t0">process 0</text>
+      <text x="255" y="292" text-anchor="middle" font-size="13.5" font-weight="700" class="t1">process 1</text>
+      <text x="385" y="292" text-anchor="middle" font-size="13.5" font-weight="700" class="t2">process 2</text>
+      <text x="515" y="292" text-anchor="middle" font-size="13.5" font-weight="700" class="t3">process 3</text>
+      <text x="470" y="60" font-size="14" font-weight="600">f(x) = x²</text>
+    </svg>
+    <figcaption>Example: n = 8 trapezoids, p = 4 processes, so local_n = 2. Process r covers the interval starting at local_a = a + r · local_n · h.</figcaption>
+  </figure>
+</section>
+
+<!-- ================= 2 V1 ================= -->
+<section id="v1">
+  <h2><span class="num">2</span>Version 1: only Send and Recv (Listing 1)</h2>
+  <p>This is the lecture’s first attempt, using only the tools from Lecture 4. Read it in three parts: <b>input</b>, <b>local work</b>, <b>collecting the result</b>.</p>
+  <div class="code"><span class="label">Listing 1, with comments</span><button class="copy" type="button">Copy</button><pre><code><span class="kw">#include</span> &lt;mpi.h&gt;
+<span class="kw">#include</span> &lt;string.h&gt;
+<span class="kw">#include</span> &lt;stdio.h&gt;
+
+<span class="kw">int</span> n;  <span class="kw">double</span> a;  <span class="kw">double</span> b;     <span class="cm">// global: the task, known to all after Input()</span>
+<span class="kw">int</span> comm_sz;  <span class="kw">int</span> my_rank;
+
+<span class="kw">double</span> f(<span class="kw">double</span> x) { <span class="kw">return</span> x * x; }
+
+<span class="kw">void</span> Input() {
+    <span class="kw">if</span> (my_rank == 0) {
+        printf(<span class="st">"Enter a, b, n\n"</span>);
+        scanf(<span class="st">"%lf %lf %d"</span>, &amp;a, &amp;b, &amp;n);
+        <span class="kw">for</span> (<span class="kw">int</span> i = 1; i &lt; comm_sz; i++) {     <span class="cm">// 3 sends to EACH other process</span>
+            <span class="fn">MPI_Send</span>(&amp;a, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
+            <span class="fn">MPI_Send</span>(&amp;b, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
+            <span class="fn">MPI_Send</span>(&amp;n, 1, MPI_INT,    i, 0, MPI_COMM_WORLD);
+        }
+    } <span class="kw">else</span> {
+        <span class="fn">MPI_Recv</span>(&amp;a, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        <span class="fn">MPI_Recv</span>(&amp;b, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        <span class="fn">MPI_Recv</span>(&amp;n, 1, MPI_INT,    0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+}
+
+<span class="cm">// serial trapezoid rule on [a, b] with n pieces of width h</span>
+<span class="kw">double</span> Trap(<span class="kw">double</span> a, <span class="kw">double</span> b, <span class="kw">int</span> n, <span class="kw">double</span> h) {
+    <span class="kw">double</span> res = 0.5 * (f(a) + f(b));             <span class="cm">// the two ends, weight 1/2</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = 1; i &lt;= n - 1; i++) {
+        <span class="kw">double</span> x = a + i * h;
+        res += f(x);                                <span class="cm">// inner points, weight 1</span>
+    }
+    <span class="kw">return</span> res * h;
+}
+
+<span class="kw">int</span> main() {
+    <span class="fn">MPI_Init</span>(NULL, NULL);
+    <span class="fn">MPI_Comm_size</span>(MPI_COMM_WORLD, &amp;comm_sz);
+    <span class="fn">MPI_Comm_rank</span>(MPI_COMM_WORLD, &amp;my_rank);
+
+    Input();
+
+    <span class="kw">double</span> h = (b - a) / n;                       <span class="cm">// same h on every process</span>
+    <span class="kw">int</span>    local_n = n / comm_sz;                 <span class="cm">// my number of trapezoids</span>
+    <span class="kw">double</span> local_a = a + my_rank * local_n * h;   <span class="cm">// where my piece starts</span>
+    <span class="kw">double</span> local_b = local_a + local_n * h;       <span class="cm">// where it ends</span>
+    <span class="kw">double</span> local_int = Trap(local_a, local_b, local_n, h);
+
+    <span class="kw">double</span> global_int;
+    <span class="kw">if</span> (my_rank != 0) {
+        <span class="fn">MPI_Send</span>(&amp;local_int, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+    } <span class="kw">else</span> {
+        global_int = local_int;                     <span class="cm">// process 0 adds everything, one by one</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i = 1; i &lt; comm_sz; i++) {
+            <span class="fn">MPI_Recv</span>(&amp;local_int, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            global_int += local_int;
+        }
+    }
+    <span class="kw">if</span> (my_rank == 0) printf(<span class="st">"Int = %lf\n"</span>, global_int);
+
+    <span class="fn">MPI_Finalize</span>();
+    <span class="kw">return</span> 0;
+}</code></pre></div>
+  <p class="small">Reusing <code>local_int</code> as the receive buffer on process 0 is safe: its own value was already copied into <code>global_int</code>.</p>
+  <div class="note beyond"><span class="tag">Beyond the lecture</span>
+    <p><b>Why only process 0 calls <code>scanf</code>:</b> in Open MPI, keyboard input (stdin) is forwarded to rank 0 only by default. The other processes get an empty input. That is why process 0 reads the numbers and then has to send them to everyone else.</p>
+  </div>
+
+  <h3>The hidden assumption: n must divide evenly</h3>
+  <div class="note warn"><span class="tag">Trap</span>
+    <p><code>local_n = n / comm_sz</code> is integer division, so the remainder is thrown away. Those last trapezoids are never computed, and the program prints a wrong answer with no warning.</p>
+  </div>
+  <p>I re-implemented the program’s exact arithmetic in Python for <i>f</i>(<i>x</i>) = <i>x</i>², <i>a</i> = 0, <i>b</i> = 3 (the exact answer is 9):</p>
+  <div class="tbl"><table>
+    <tr><th>n</th><th>processes</th><th>local_n</th><th>Interval actually covered</th><th>Printed result</th></tr>
+    <tr><td class="num">1024</td><td class="num">4</td><td class="num">256</td><td>[0, 3]</td><td class="num">9.000004</td></tr>
+    <tr><td class="num">1000</td><td class="num">3</td><td class="num">333</td><td>[0, 2.997]</td><td class="num bad">8.973031</td></tr>
+    <tr><td class="num">10</td><td class="num">4</td><td class="num">2</td><td>[0, 2.4]</td><td class="num bad">4.644000</td></tr>
+    <tr><td class="num">3</td><td class="num">4</td><td class="num">0</td><td>nothing</td><td class="num bad">0.000000</td></tr>
+  </table></div>
+  <p class="small">The small error in the first row (9.000004 instead of 9) is the normal error of the trapezoid rule, not a bug. I could not compile and run the C code itself here (MPI could not be installed in my environment), so these numbers come from a faithful Python re-implementation of the same arithmetic.</p>
+</section>
+
+<!-- ================= 3 TREE ================= -->
+<section id="tree">
+  <h2><span class="num">3</span>The bottleneck, and the tree that fixes it</h2>
+  <p>In Version 1, <b>process 0 does all the adding</b>. With <i>p</i> processes it receives and adds <i>p</i> − 1 values one after another, while all other processes sit idle. That takes time proportional to <i>p</i>: <b>O(<i>p</i>)</b>.</p>
+  <p>A better plan is a <b>tree</b> <span class="ru">(древовидная структура)</span>: pair processes up and add in parallel. Each round halves the number of values still in play, so only about log₂ <i>p</i> rounds are needed: <b>O(log <i>p</i>)</b>.</p>
+  <figure>
+    <svg viewBox="0 0 640 290" role="img" aria-label="Tree sum of eight values 5, 2, -1, -3, 6, 5, -7, 2 reaching 9 in three rounds">
+      <text x="320" y="14" text-anchor="middle" font-size="13" class="mut" font-weight="600">processes</text>
+      <text x="50" y="24" text-anchor="middle" font-size="13" class="mut">0</text>
+<text x="127" y="24" text-anchor="middle" font-size="13" class="mut">1</text>
+<text x="204" y="24" text-anchor="middle" font-size="13" class="mut">2</text>
+<text x="281" y="24" text-anchor="middle" font-size="13" class="mut">3</text>
+<text x="358" y="24" text-anchor="middle" font-size="13" class="mut">4</text>
+<text x="435" y="24" text-anchor="middle" font-size="13" class="mut">5</text>
+<text x="512" y="24" text-anchor="middle" font-size="13" class="mut">6</text>
+<text x="589" y="24" text-anchor="middle" font-size="13" class="mut">7</text>
+<circle class="nd" cx="50" cy="50" r="17"/><text x="50" y="55" text-anchor="middle" font-size="14" font-weight="600">5</text>
+<circle class="nd" cx="127" cy="50" r="17"/><text x="127" y="55" text-anchor="middle" font-size="14" font-weight="600">2</text>
+<circle class="nd" cx="204" cy="50" r="17"/><text x="204" y="55" text-anchor="middle" font-size="14" font-weight="600">-1</text>
+<circle class="nd" cx="281" cy="50" r="17"/><text x="281" y="55" text-anchor="middle" font-size="14" font-weight="600">-3</text>
+<circle class="nd" cx="358" cy="50" r="17"/><text x="358" y="55" text-anchor="middle" font-size="14" font-weight="600">6</text>
+<circle class="nd" cx="435" cy="50" r="17"/><text x="435" y="55" text-anchor="middle" font-size="14" font-weight="600">5</text>
+<circle class="nd" cx="512" cy="50" r="17"/><text x="512" y="55" text-anchor="middle" font-size="14" font-weight="600">-7</text>
+<circle class="nd" cx="589" cy="50" r="17"/><text x="589" y="55" text-anchor="middle" font-size="14" font-weight="600">2</text>
+<line class="st" x1="50" y1="67" x2="50" y2="103"/>
+<line class="ed" x1="113.7" y1="62.1" x2="64.8" y2="106.5" marker-end="url(#ar)"/>
+<circle class="nd" cx="50" cy="120" r="17"/><text x="50" y="125" text-anchor="middle" font-size="14" font-weight="600">7</text>
+<line class="st" x1="204" y1="67" x2="204" y2="103"/>
+<line class="ed" x1="267.7" y1="62.1" x2="218.8" y2="106.5" marker-end="url(#ar)"/>
+<circle class="nd" cx="204" cy="120" r="17"/><text x="204" y="125" text-anchor="middle" font-size="14" font-weight="600">-4</text>
+<line class="st" x1="358" y1="67" x2="358" y2="103"/>
+<line class="ed" x1="421.7" y1="62.1" x2="372.8" y2="106.5" marker-end="url(#ar)"/>
+<circle class="nd" cx="358" cy="120" r="17"/><text x="358" y="125" text-anchor="middle" font-size="14" font-weight="600">11</text>
+<line class="st" x1="512" y1="67" x2="512" y2="103"/>
+<line class="ed" x1="575.7" y1="62.1" x2="526.8" y2="106.5" marker-end="url(#ar)"/>
+<circle class="nd" cx="512" cy="120" r="17"/><text x="512" y="125" text-anchor="middle" font-size="14" font-weight="600">-5</text>
+<line class="st" x1="50" y1="137" x2="50" y2="173"/>
+<line class="ed" x1="187.6" y1="127.4" x2="68.2" y2="181.7" marker-end="url(#ar)"/>
+<circle class="nd" cx="50" cy="190" r="17"/><text x="50" y="195" text-anchor="middle" font-size="14" font-weight="600">3</text>
+<line class="st" x1="358" y1="137" x2="358" y2="173"/>
+<line class="ed" x1="495.6" y1="127.4" x2="376.2" y2="181.7" marker-end="url(#ar)"/>
+<circle class="nd" cx="358" cy="190" r="17"/><text x="358" y="195" text-anchor="middle" font-size="14" font-weight="600">6</text>
+<line class="st" x1="50" y1="207" x2="50" y2="243"/>
+<line class="ed" x1="340.4" y1="194.0" x2="69.5" y2="255.6" marker-end="url(#ar)"/>
+<circle class="nd" cx="50" cy="260" r="17"/><text x="50" y="265" text-anchor="middle" font-size="14" font-weight="600">9</text>
+      <text x="625" y="124" text-anchor="end" font-size="12.5" class="mut">round 1</text>
+      <text x="625" y="194" text-anchor="end" font-size="12.5" class="mut">round 2</text>
+      <text x="625" y="264" text-anchor="end" font-size="12.5" class="mut">round 3</text>
+    </svg>
+    <figcaption>Figure 1 from the lecture, redrawn. 8 values, 3 rounds. Solid arrow: a value is sent and added. Dashed line: a process keeps its own value. I checked every sum: 5+2=7, −1−3=−4, 6+5=11, −7+2=−5; then 7−4=3, 11−5=6; then 3+6=9.</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <tr><th>Processes p</th><th>Process 0 alone (p − 1 steps)</th><th>Tree (log₂ p rounds)</th></tr>
+    <tr><td class="num">8</td><td class="num">7</td><td class="num">3</td></tr>
+    <tr><td class="num">64</td><td class="num">63</td><td class="num">6</td></tr>
+    <tr><td class="num">1024</td><td class="num">1023</td><td class="num">10</td></tr>
+  </table></div>
+  <p>You don’t write this tree yourself. MPI provides it as one call: <code>MPI_Reduce</code>.</p>
+  <div class="note beyond"><span class="tag">Beyond the lecture</span>
+    <p>The MPI standard says <em>what</em> <code>MPI_Reduce</code> computes, not <em>how</em>. A tree like Figure 1 is a typical way to do it, but each library chooses its own algorithm.</p>
+  </div>
+</section>
+
+<!-- ================= 4 REDUCE ================= -->
+<section id="reduce">
+  <h2><span class="num">4</span>MPI_Reduce</h2>
+  <p>A <b>collective communication</b> <span class="ru">(коллективная коммуникация)</span>: every process contributes a value, MPI combines them with an operation (sum, max, …), and the result lands on one process, the <b>root</b>.</p>
+  <div class="code"><span class="label">Signature (MPI standard)</span><pre><code><span class="kw">int</span> <span class="fn">MPI_Reduce</span>(<span class="kw">const void</span> *sendbuf,     <span class="cm">/* in  */</span>
+               <span class="kw">void</span>       *recvbuf,     <span class="cm">/* out, used only on root */</span>
+               <span class="kw">int</span>         count,       <span class="cm">/* in  */</span>
+               MPI_Datatype datatype,   <span class="cm">/* in  */</span>
+               MPI_Op      op,          <span class="cm">/* in  */</span>
+               <span class="kw">int</span>         root,        <span class="cm">/* in  */</span>
+               MPI_Comm    comm);       <span class="cm">/* in  */</span></code></pre></div>
+  <div class="tbl"><table>
+    <tr><th>#</th><th>Lecture name</th><th>Standard name</th><th>Meaning</th></tr>
+    <tr><td class="n">1</td><td><code>input_buf_p</code></td><td><code>sendbuf</code></td><td>My contribution</td></tr>
+    <tr><td class="n">2</td><td><code>output_buf_p</code></td><td><code>recvbuf</code></td><td>Where the result goes. <b>Only matters on the root.</b></td></tr>
+    <tr><td class="n">3</td><td><code>count</code></td><td><code>count</code></td><td>Number of elements</td></tr>
+    <tr><td class="n">4</td><td><code>datatype</code></td><td><code>datatype</code></td><td>Element type</td></tr>
+    <tr><td class="n">5</td><td><code>operation</code></td><td><code>op</code></td><td>How to combine: <code>MPI_SUM</code>, <code>MPI_MAX</code>, …</td></tr>
+    <tr><td class="n">6</td><td><code>dest</code> <span class="small">(text: root)</span></td><td><code>root</code></td><td>Rank that receives the result</td></tr>
+    <tr><td class="n">7</td><td><code>Communicator</code></td><td><code>comm</code></td><td>Which processes take part</td></tr>
+  </table></div>
+  <p>In the integral program, the whole collection loop from Version 1 becomes:</p>
+  <div class="code"><pre><code><span class="fn">MPI_Reduce</span>(&amp;local_int, &amp;global_int, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);</code></pre></div>
+
+  <h3>Available operations</h3>
+  <p>The lecture mentions sum, product, minimum, maximum, logical and bitwise operations, and user-defined ones. The predefined names are:</p>
+  <div class="tbl"><table>
+    <tr><th>Operation</th><th>Meaning</th></tr>
+    <tr><td><code>MPI_SUM</code>, <code>MPI_PROD</code></td><td>sum, product</td></tr>
+    <tr><td><code>MPI_MAX</code>, <code>MPI_MIN</code></td><td>maximum, minimum</td></tr>
+    <tr><td><code>MPI_LAND</code>, <code>MPI_LOR</code>, <code>MPI_LXOR</code></td><td>logical AND, OR, XOR</td></tr>
+    <tr><td><code>MPI_BAND</code>, <code>MPI_BOR</code>, <code>MPI_BXOR</code></td><td>bitwise AND, OR, XOR</td></tr>
+    <tr><td><code>MPI_MAXLOC</code>, <code>MPI_MINLOC</code></td><td>max / min together with the rank (or index) where it was found</td></tr>
+  </table></div>
+  <p>Your own operation is created with <code>MPI_Op_create</code>.</p>
+  <div class="note beyond"><span class="tag">Beyond the lecture</span>
+    <ul>
+      <li><b>Arrays are combined element by element.</b> With <code>count = 3</code>, element 0 of all processes is combined into result element 0, element 1 into element 1, and so on.</li>
+      <li><b>Floating-point sums may differ slightly between runs.</b> MPI assumes the operation is associative and may add in any order. For doubles, a different order can change the last digits.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= 5 BCAST ================= -->
+<section id="bcast">
+  <h2><span class="num">5</span>MPI_Bcast</h2>
+  <p><b>Broadcast</b>: one process (the root) sends the same data to <b>all</b> other processes in the communicator. It is the opposite direction of Reduce.</p>
+  <div class="code"><span class="label">Signature (MPI standard)</span><pre><code><span class="kw">int</span> <span class="fn">MPI_Bcast</span>(<span class="kw">void</span>        *buffer,     <span class="cm">/* in on root, out on all others */</span>
+              <span class="kw">int</span>          count,
+              MPI_Datatype datatype,
+              <span class="kw">int</span>          root,       <span class="cm">/* lecture: source_proc */</span>
+              MPI_Comm     comm);</code></pre></div>
+  <div class="note key"><span class="tag">Key idea</span>
+    <p>There is <b>one buffer</b>, and its role depends on who you are. On the root it holds the data to send. On every other process MPI overwrites it with the received copy. All processes call exactly the same line.</p>
+  </div>
+  <div class="code"><span class="label">Input() becomes three lines</span><pre><code><span class="kw">if</span> (my_rank == 0) scanf(<span class="st">"%lf %lf %d"</span>, &amp;a, &amp;b, &amp;n);   <span class="cm">// only root reads</span>
+<span class="fn">MPI_Bcast</span>(&amp;a, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);         <span class="cm">// everyone calls</span>
+<span class="fn">MPI_Bcast</span>(&amp;b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+<span class="fn">MPI_Bcast</span>(&amp;n, 1, MPI_INT,    0, MPI_COMM_WORLD);</code></pre></div>
+</section>
+
+<!-- ================= 6 ALLREDUCE ================= -->
+<section id="allreduce">
+  <h2><span class="num">6</span>MPI_Allreduce</h2>
+  <p>Same as <code>MPI_Reduce</code>, but <b>every</b> process gets the result, not only the root. Because nobody is special, there is <b>no root argument</b>.</p>
+  <div class="code"><span class="label">Signature (MPI standard)</span><pre><code><span class="kw">int</span> <span class="fn">MPI_Allreduce</span>(<span class="kw">const void</span> *sendbuf,
+                  <span class="kw">void</span>       *recvbuf,     <span class="cm">/* result on EVERY process */</span>
+                  <span class="kw">int</span>         count,
+                  MPI_Datatype datatype,
+                  MPI_Op      op,
+                  MPI_Comm    comm);        <span class="cm">/* note: no root */</span></code></pre></div>
+  <figure>
+    <svg viewBox="0 0 640 470" role="img" aria-label="Allreduce: tree sum up to process 0, then broadcast of 9 down to all eight processes">
+      <text x="320" y="14" text-anchor="middle" font-size="13" class="mut" font-weight="600">processes</text>
+      <text x="50" y="24" text-anchor="middle" font-size="13" class="mut">0</text>
+<text x="127" y="24" text-anchor="middle" font-size="13" class="mut">1</text>
+<text x="204" y="24" text-anchor="middle" font-size="13" class="mut">2</text>
+<text x="281" y="24" text-anchor="middle" font-size="13" class="mut">3</text>
+<text x="358" y="24" text-anchor="middle" font-size="13" class="mut">4</text>
+<text x="435" y="24" text-anchor="middle" font-size="13" class="mut">5</text>
+<text x="512" y="24" text-anchor="middle" font-size="13" class="mut">6</text>
+<text x="589" y="24" text-anchor="middle" font-size="13" class="mut">7</text>
+<circle class="nd" cx="50" cy="50" r="17"/><text x="50" y="55" text-anchor="middle" font-size="14" font-weight="600">5</text>
+<circle class="nd" cx="127" cy="50" r="17"/><text x="127" y="55" text-anchor="middle" font-size="14" font-weight="600">2</text>
+<circle class="nd" cx="204" cy="50" r="17"/><text x="204" y="55" text-anchor="middle" font-size="14" font-weight="600">-1</text>
+<circle class="nd" cx="281" cy="50" r="17"/><text x="281" y="55" text-anchor="middle" font-size="14" font-weight="600">-3</text>
+<circle class="nd" cx="358" cy="50" r="17"/><text x="358" y="55" text-anchor="middle" font-size="14" font-weight="600">6</text>
+<circle class="nd" cx="435" cy="50" r="17"/><text x="435" y="55" text-anchor="middle" font-size="14" font-weight="600">5</text>
+<circle class="nd" cx="512" cy="50" r="17"/><text x="512" y="55" text-anchor="middle" font-size="14" font-weight="600">-7</text>
+<circle class="nd" cx="589" cy="50" r="17"/><text x="589" y="55" text-anchor="middle" font-size="14" font-weight="600">2</text>
+<line class="st" x1="50" y1="67" x2="50" y2="93"/>
+<line class="ed" x1="112.8" y1="61.1" x2="65.8" y2="97.7" marker-end="url(#ar)"/>
+<circle class="nd" cx="50" cy="110" r="17"/><text x="50" y="115" text-anchor="middle" font-size="14" font-weight="600">7</text>
+<line class="st" x1="204" y1="67" x2="204" y2="93"/>
+<line class="ed" x1="266.8" y1="61.1" x2="219.8" y2="97.7" marker-end="url(#ar)"/>
+<circle class="nd" cx="204" cy="110" r="17"/><text x="204" y="115" text-anchor="middle" font-size="14" font-weight="600">-4</text>
+<line class="st" x1="358" y1="67" x2="358" y2="93"/>
+<line class="ed" x1="420.8" y1="61.1" x2="373.8" y2="97.7" marker-end="url(#ar)"/>
+<circle class="nd" cx="358" cy="110" r="17"/><text x="358" y="115" text-anchor="middle" font-size="14" font-weight="600">11</text>
+<line class="st" x1="512" y1="67" x2="512" y2="93"/>
+<line class="ed" x1="574.8" y1="61.1" x2="527.8" y2="97.7" marker-end="url(#ar)"/>
+<circle class="nd" cx="512" cy="110" r="17"/><text x="512" y="115" text-anchor="middle" font-size="14" font-weight="600">-5</text>
+<line class="st" x1="50" y1="127" x2="50" y2="153"/>
+<line class="ed" x1="187.2" y1="116.5" x2="68.6" y2="162.7" marker-end="url(#ar)"/>
+<circle class="nd" cx="50" cy="170" r="17"/><text x="50" y="175" text-anchor="middle" font-size="14" font-weight="600">3</text>
+<line class="st" x1="358" y1="127" x2="358" y2="153"/>
+<line class="ed" x1="495.2" y1="116.5" x2="376.6" y2="162.7" marker-end="url(#ar)"/>
+<circle class="nd" cx="358" cy="170" r="17"/><text x="358" y="175" text-anchor="middle" font-size="14" font-weight="600">6</text>
+<line class="st" x1="50" y1="187" x2="50" y2="213"/>
+<line class="ed" x1="340.3" y1="173.4" x2="69.6" y2="226.2" marker-end="url(#ar)"/>
+<circle class="nd" cx="50" cy="230" r="17"/><text x="50" y="235" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="st" x1="50" y1="247" x2="50" y2="283"/>
+<circle class="nd2" cx="50" cy="300" r="17"/><text x="50" y="305" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="ed2" x1="67.6" y1="234.0" x2="338.5" y2="295.6" marker-end="url(#ar2)"/>
+<circle class="nd2" cx="358" cy="300" r="17"/><text x="358" y="305" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="st" x1="50" y1="317" x2="50" y2="353"/>
+<circle class="nd2" cx="50" cy="370" r="17"/><text x="50" y="375" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="ed2" x1="66.4" y1="307.4" x2="185.8" y2="361.7" marker-end="url(#ar2)"/>
+<circle class="nd2" cx="204" cy="370" r="17"/><text x="204" y="375" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="st" x1="358" y1="317" x2="358" y2="353"/>
+<circle class="nd2" cx="358" cy="370" r="17"/><text x="358" y="375" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="ed2" x1="374.4" y1="307.4" x2="493.8" y2="361.7" marker-end="url(#ar2)"/>
+<circle class="nd2" cx="512" cy="370" r="17"/><text x="512" y="375" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="st" x1="50" y1="387" x2="50" y2="423"/>
+<circle class="nd2" cx="50" cy="440" r="17"/><text x="50" y="445" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="ed2" x1="63.3" y1="382.1" x2="112.2" y2="426.5" marker-end="url(#ar2)"/>
+<circle class="nd2" cx="127" cy="440" r="17"/><text x="127" y="445" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="st" x1="204" y1="387" x2="204" y2="423"/>
+<circle class="nd2" cx="204" cy="440" r="17"/><text x="204" y="445" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="ed2" x1="217.3" y1="382.1" x2="266.2" y2="426.5" marker-end="url(#ar2)"/>
+<circle class="nd2" cx="281" cy="440" r="17"/><text x="281" y="445" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="st" x1="358" y1="387" x2="358" y2="423"/>
+<circle class="nd2" cx="358" cy="440" r="17"/><text x="358" y="445" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="ed2" x1="371.3" y1="382.1" x2="420.2" y2="426.5" marker-end="url(#ar2)"/>
+<circle class="nd2" cx="435" cy="440" r="17"/><text x="435" y="445" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="st" x1="512" y1="387" x2="512" y2="423"/>
+<circle class="nd2" cx="512" cy="440" r="17"/><text x="512" y="445" text-anchor="middle" font-size="14" font-weight="600">9</text>
+<line class="ed2" x1="525.3" y1="382.1" x2="574.2" y2="426.5" marker-end="url(#ar2)"/>
+<circle class="nd2" cx="589" cy="440" r="17"/><text x="589" y="445" text-anchor="middle" font-size="14" font-weight="600">9</text>
+      <text x="625" y="140" text-anchor="end" font-size="13" class="mut" font-weight="600">reduce</text>
+      <text x="625" y="370" text-anchor="end" font-size="13" font-weight="600" class="okt">broadcast</text>
+    </svg>
+    <figcaption>Figure 2 from the lecture, redrawn: the values are summed up a tree to process 0 (blue), then the result 9 is sent back down a tree to everyone (green). After 6 rounds all 8 processes hold 9.</figcaption>
+  </figure>
+  <div class="note fix"><span class="tag">Clarified</span>
+    <p>The notes say Allreduce “comes down to” Reduce followed by Bcast. That is true for the <b>result</b>. The standard does not fix the algorithm, and libraries may use faster schemes that finish in fewer rounds than the two trees above.</p>
+  </div>
+  <div class="tbl"><table>
+    <tr><th>Function</th><th>Data flow</th><th>Who has the result</th><th>Root argument?</th></tr>
+    <tr><td><code>MPI_Reduce</code></td><td>many → one</td><td>root only</td><td>yes</td></tr>
+    <tr><td><code>MPI_Bcast</code></td><td>one → many</td><td>everyone (a copy)</td><td>yes</td></tr>
+    <tr><td><code>MPI_Allreduce</code></td><td>many → all</td><td>everyone</td><td>no</td></tr>
+  </table></div>
+</section>
+
+<!-- ================= 7 V2 ================= -->
+<section id="v2">
+  <h2><span class="num">7</span>Version 2: with collectives (Listing 2)</h2>
+  <p>The same program, rewritten. Changed lines are highlighted in green. I checked the listing: it is correct (with the same <i>n</i>-divisible-by-<i>p</i> assumption as Version 1).</p>
+  <div class="code"><span class="label">Listing 2, with comments</span><button class="copy" type="button">Copy</button><pre><code><span class="kw">#include</span> &lt;mpi.h&gt;
+<span class="kw">#include</span> &lt;string.h&gt;
+<span class="kw">#include</span> &lt;stdio.h&gt;
+
+<span class="kw">int</span> n;  <span class="kw">double</span> a;  <span class="kw">double</span> b;
+<span class="kw">int</span> comm_sz;  <span class="kw">int</span> my_rank;
+
+<span class="kw">double</span> f(<span class="kw">double</span> x) { <span class="kw">return</span> x * x; }
+
+<span class="kw">void</span> Input() {
+    <span class="kw">if</span> (my_rank == 0) {
+        printf(<span class="st">"Enter a, b, n\n"</span>);
+        scanf(<span class="st">"%lf %lf %d"</span>, &amp;a, &amp;b, &amp;n);
+    }
+<span class="hlok">    <span class="fn">MPI_Bcast</span>(&amp;a, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);   <span class="cm">// all processes call these</span></span>
+<span class="hlok">    <span class="fn">MPI_Bcast</span>(&amp;b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);</span>
+<span class="hlok">    <span class="fn">MPI_Bcast</span>(&amp;n, 1, MPI_INT,    0, MPI_COMM_WORLD);</span>
+}
+
+<span class="kw">double</span> Trap(<span class="kw">double</span> a, <span class="kw">double</span> b, <span class="kw">int</span> n, <span class="kw">double</span> h) {
+    <span class="kw">double</span> res = (f(a) + f(b)) / 2.0;             <span class="cm">// same as 0.5 * (...) in Listing 1</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = 1; i &lt;= n - 1; i++) {
+        <span class="kw">double</span> x = a + i * h;
+        res += f(x);
+    }
+    <span class="kw">return</span> h * res;
+}
+
+<span class="kw">int</span> main() {
+    <span class="fn">MPI_Init</span>(NULL, NULL);
+    <span class="fn">MPI_Comm_size</span>(MPI_COMM_WORLD, &amp;comm_sz);
+    <span class="fn">MPI_Comm_rank</span>(MPI_COMM_WORLD, &amp;my_rank);
+
+    Input();
+
+    <span class="kw">int</span>    local_n = n / comm_sz;
+    <span class="kw">double</span> h = (b - a) / n;
+    <span class="kw">double</span> local_a = a + my_rank * local_n * h;
+    <span class="kw">double</span> local_b = local_a + local_n * h;
+    <span class="kw">double</span> local_int = Trap(local_a, local_b, local_n, h);
+    <span class="kw">double</span> global_int = 0.0;
+
+<span class="hlok">    <span class="fn">MPI_Reduce</span>(&amp;local_int, &amp;global_int, 1, MPI_DOUBLE,</span>
+<span class="hlok">               MPI_SUM, 0, MPI_COMM_WORLD);           <span class="cm">// replaces the whole Send/Recv loop</span></span>
+
+    <span class="kw">if</span> (my_rank == 0) printf(<span class="st">"Int = %lf\n"</span>, global_int);
+
+    <span class="fn">MPI_Finalize</span>();
+    <span class="kw">return</span> 0;
+}</code></pre></div>
+  <div class="tbl"><table>
+    <tr><th>Step</th><th>Version 1</th><th>Version 2</th></tr>
+    <tr><td>Distribute a, b, n</td><td>3 × (p − 1) Sends on process 0 + 3 Recvs on each other process</td><td>3 × <code>MPI_Bcast</code>, same line on all processes</td></tr>
+    <tr><td>Collect the sum</td><td>Loop of p − 1 Recvs, process 0 adds alone: O(p)</td><td>1 × <code>MPI_Reduce</code>, typically tree-based: O(log p)</td></tr>
+    <tr><td>Rank-specific code</td><td>Two different branches</td><td>Only the <code>scanf</code> and <code>printf</code></td></tr>
+  </table></div>
+</section>
+
+<!-- ================= 8 RULES ================= -->
+<section id="rules">
+  <h2><span class="num">8</span>Three rules of collective calls</h2>
+
+  <h3>Rule 1. Every process in the communicator must make the call</h3>
+  <p>If even one process skips it, the result is undefined. In practice the program usually <b>hangs</b>, because the others wait for a contribution that never comes.</p>
+  <div class="note beyond"><span class="tag">Beyond the lecture</span>
+    <p>All processes must also pass the <b>same</b> <code>count</code>, <code>datatype</code>, <code>op</code>, <code>root</code> and communicator. Only the buffers may differ.</p>
+  </div>
+
+  <h3>Rule 2. The output buffer matters only on the root</h3>
+  <p>For <code>MPI_Reduce</code>, only the root’s <code>recvbuf</code> receives anything. On other processes you can pass anything, even <code>NULL</code>.</p>
+  <div class="note fix"><span class="tag">Corrected</span>
+    <p>In the notes, both branches of the example are identical, so they show nothing. This is what the example is meant to show:</p>
+  </div>
+  <div class="code"><pre><code><span class="kw">if</span> (my_rank == 0)
+    <span class="fn">MPI_Reduce</span>(&amp;local_int, &amp;global_int, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+<span class="kw">else</span>
+<span class="hlok">    <span class="fn">MPI_Reduce</span>(&amp;local_int, NULL,        1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);</span></code></pre></div>
+  <div class="note beyond"><span class="tag">Beyond the lecture</span>
+    <p>Don’t pass the <b>same variable</b> as both input and output, like <code>MPI_Reduce(&amp;x, &amp;x, ...)</code>. The standard forbids this aliasing. If you want the result to overwrite the input, pass <code>MPI_IN_PLACE</code> as <code>sendbuf</code> on the root.</p>
+  </div>
+
+  <h3>Rule 3. Collectives match by communicator and call order, not by tags</h3>
+  <p>Point-to-point messages are matched by communicator, tag, and sender/receiver ranks. Collective calls have <b>no tags</b>. MPI matches them only by communicator and <b>the order in which each process calls them</b>: every process’s 1st collective call goes together, then every 2nd, and so on. Variable names play no role.</p>
+  <div class="code"><span class="label">Listing 3, run with 3 processes</span><pre><code><span class="kw">int</span> a = 1;  <span class="kw">int</span> c = 2;
+<span class="kw">int</span> b = 0;  <span class="kw">int</span> d = 0;
+
+<span class="kw">if</span> (my_rank == 0 || my_rank == 2) {
+    <span class="fn">MPI_Reduce</span>(&amp;a, &amp;b, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);   <span class="cm">// 1st call</span>
+    <span class="fn">MPI_Reduce</span>(&amp;c, &amp;d, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);   <span class="cm">// 2nd call</span>
+} <span class="kw">else</span> {
+    <span class="fn">MPI_Reduce</span>(&amp;c, &amp;d, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);   <span class="cm">// 1st call</span>
+    <span class="fn">MPI_Reduce</span>(&amp;a, &amp;b, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);   <span class="cm">// 2nd call</span>
+}
+<span class="kw">if</span> (my_rank == 0) printf(<span class="st">"b = %d, d = %d\n"</span>, b, d);</code></pre></div>
+  <p>A reader might expect b = 1+1+1 = 3 and d = 2+2+2 = 6. But MPI pairs up the calls by order:</p>
+  <div class="tbl"><table>
+    <tr><th>Call</th><th>Process 0 sends</th><th>Process 1 sends</th><th>Process 2 sends</th><th>Sum</th><th>Stored in (root’s recvbuf)</th></tr>
+    <tr><td>1st</td><td class="num">a = 1</td><td class="num">c = 2</td><td class="num">a = 1</td><td class="num">4</td><td><code>b</code></td></tr>
+    <tr><td>2nd</td><td class="num">c = 2</td><td class="num">a = 1</td><td class="num">c = 2</td><td class="num">5</td><td><code>d</code></td></tr>
+  </table></div>
+  <p>Output: <b><code>b = 4, d = 5</code></b>, as the lecture says. I verified this by walking through the calls. The result is stored in <code>b</code> and <code>d</code> because those are the output buffers <b>process 0 (the root)</b> passed in its 1st and 2nd calls.</p>
+</section>
+
+<!-- ================= CHEAT ================= -->
+<section id="cheat">
+  <h2>Cheat sheet</h2>
+  <div class="cheat">
+    <div><h4>Trapezoid rule</h4><p>h = (b − a)/n. Sum = h·[(f(a)+f(b))/2 + f(x₁)+…+f(xₙ₋₁)]</p></div>
+    <div><h4>Work split</h4><p><code>local_n = n/p</code>, <code>local_a = a + rank·local_n·h</code>. Needs n divisible by p.</p></div>
+    <div><h4>MPI_Reduce</h4><p><code>(sendbuf, recvbuf, count, type, op, root, comm)</code><br>many → one. recvbuf used only on root.</p></div>
+    <div><h4>MPI_Bcast</h4><p><code>(buffer, count, type, root, comm)</code><br>one → many. Same buffer: in on root, out elsewhere.</p></div>
+    <div><h4>MPI_Allreduce</h4><p><code>(sendbuf, recvbuf, count, type, op, comm)</code><br>many → all. No root.</p></div>
+    <div><h4>Operations</h4><p><code>MPI_SUM PROD MAX MIN</code>, logical <code>LAND LOR LXOR</code>, bitwise <code>BAND BOR BXOR</code>, <code>MAXLOC MINLOC</code>, custom via <code>MPI_Op_create</code>.</p></div>
+    <div><h4>Cost</h4><p>Process 0 sums alone: O(p). Tree: O(log p).</p></div>
+    <div><h4>Rules</h4><p>1) all processes call. 2) output only on root. 3) matched by comm + call order, no tags.</p></div>
+  </div>
+</section>
+
+<!-- ================= QUIZ ================= -->
+<section id="quiz">
+  <h2>Self-check</h2>
+  <p>Answer in your head first, then open.</p>
+  <details><summary>What is the main weakness of Version 1 (Listing 1)?</summary>
+    <div>Process 0 receives and adds all partial sums by itself, one after another: O(p) time while the others sit idle. A tree reduction does it in O(log p) rounds.</div></details>
+  <details><summary>Write the call that puts the maximum of every process’s <code>double t</code> into <code>tmax</code> on process 0.</summary>
+    <div><code>MPI_Reduce(&amp;t, &amp;tmax, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);</code></div></details>
+  <details><summary>Every process needs the global sum, not just process 0. Which function, and why does it have no root?</summary>
+    <div><code>MPI_Allreduce</code>. The result goes to everyone, so no single destination needs to be named.</div></details>
+  <details><summary>In <code>MPI_Bcast</code>, is the buffer input or output?</summary>
+    <div>Both. On the root it is the input (the data to send). On every other process it is the output (overwritten with the received copy).</div></details>
+  <details><summary>You run Version 2 with n = 10 on 4 processes, for x² on [0, 3]. Is the answer right?</summary>
+    <div>No. <code>local_n = 10/4 = 2</code>, so only 8 of the 10 trapezoids are computed, covering [0, 2.4]. The program prints about 4.644 instead of about 9.</div></details>
+  <details><summary>Process 2 forgets to call <code>MPI_Reduce</code>. What happens?</summary>
+    <div>The behaviour is undefined; in practice the program usually hangs, since the collective can’t complete without process 2’s contribution.</div></details>
+  <details><summary>Why does Listing 3 print b = 4, d = 5 instead of 3 and 6?</summary>
+    <div>Collectives have no tags. MPI matches each process’s 1st call with the others’ 1st call, and so on. In the 1st call, processes 0 and 2 send a = 1 while process 1 sends c = 2: total 4, stored in the root’s b. The 2nd call gives 2 + 1 + 2 = 5, stored in d.</div></details>
+  <details><summary>Can you write <code>MPI_Reduce(&amp;x, &amp;x, 1, MPI_INT, MPI_SUM, 0, comm)</code>?</summary>
+    <div>No, the input and output buffers must not be the same memory. On the root, pass <code>MPI_IN_PLACE</code> as the first argument instead.</div></details>
+</section>
+
+<footer>
+  <p>Sources checked: MPI-1.1 standard (reduce semantics, collective correctness rules), MPICH reference pages for MPI_Reduce, MPI_Bcast and MPI_Allreduce, MPI-2 standard reduce page, Open MPI v4.1 mpirun documentation (stdin forwarding). Numbers in section 2 come from a Python re-implementation of the listings’ arithmetic.</p>
+</footer>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var pre = btn.parentElement.querySelector('pre');
+    var done = function(){ btn.textContent = 'Copied'; setTimeout(function(){ btn.textContent = 'Copy'; }, 1400); };
+    function selectIt(){ var r = document.createRange(); r.selectNodeContents(pre); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = 'Press Ctrl+C'; }
+    try { navigator.clipboard.writeText(pre.innerText).then(done, selectIt); } catch(e){ selectIt(); }
+  });
+});
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var map = {}; links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+  if (!('IntersectionObserver' in window)) return;
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting){ links.forEach(function(l){ l.classList.remove('on'); }); var a = map[e.target.id]; if (a) a.classList.add('on'); }
+    });
+  }, {rootMargin:'-20% 0px -70% 0px'});
+  document.querySelectorAll('main section[id]').forEach(function(s){ io.observe(s); });
+})();
+</script>
+
+</body></html>
